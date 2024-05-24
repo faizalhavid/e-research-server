@@ -1,0 +1,193 @@
+{% extends "admin/base_site.html" %}
+{% load filtering %}
+
+{% load static %}
+
+{% block extrastyle %}
+<style>
+
+    .chart-container {
+        display: flex;
+        justify-content: space-around;
+        width: window.innerWidth;
+        height: 500px;
+        border: 1px solid grey;
+        margin: 0 auto;
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .table-chart {
+        height: 50px;
+        margin-left: 20px;
+        width: 30%;
+    }
+    .table-chart th {
+        text-align: center;
+    }
+    .table-chart td {
+        text-align: center;
+    }
+    .table-chart tbody {
+        height: 50px !important;
+        
+    }
+    .table-chart tbody tr:nth-child(odd) {
+        background-color: #848484;
+        
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<main>
+    <form method="get">
+        {{ form.period }}
+        <input type="submit" value="Select period">
+    </form>
+    <h1 class="text-center">Number of students per departement {{list_chart_data.periode}}</h1>
+    <div class='chart-container'>
+        <canvas id="chartNumberOfStudentsPerDepartement"></canvas>
+        <table class="table-chart">
+            <thead>
+                <tr>
+                    <th>Departement</th>
+                    <th>Number of students</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for label in list_chart_data.labels %}
+                    <tr>
+                        <td>{{ label }}</td>
+                        <td>{{ list_chart_data.datasets.0.data|get_item:forloop.counter0 }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <h1 class="text-center">Number of students per major {{second_chart_data.periode}}</h1>
+    <div class='chart-container'>
+        <canvas id="mySecondChart"></canvas>
+    </div>
+    <h1 class="text-center">Number of students per category {{third_chart_data.periode}}</h1>
+    <div class='chart-container'>
+        <canvas id="chartNumberOfStudentsPerCategory"></canvas>
+    </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script>
+    var ctx = document.getElementById('chartNumberOfStudentsPerDepartement').getContext('2d');
+    var chartNumberOfStudentsPerDepartement = new Chart(ctx, {
+        type: '{{ list_chart_type }}',
+        data: {{ list_chart_data|safe }},
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    display: false
+                },
+                y: {
+                    display: false,
+                    beginAtZero: true
+                }
+            },
+            parsing: {
+                xAxisKey: 'departement',
+                yAxisKey: 'number_of_students'
+            },
+            plugins: {
+                legend: {
+                    position: 'right'
+                },
+                datalabels: {
+                    color: 'black',                   
+                    font: {
+                        weight: 'bold'
+                    },
+                    formatter: Math.round,
+                    value : {
+                        display: true,
+                        color: 'black',
+                        font: {
+                            weight: 'bold'
+                        }
+                    }
+                }
+            },
+        }
+    });
+    
+
+    var ctx2 = document.getElementById('mySecondChart').getContext('2d');
+    var mySecondChart = new Chart(ctx2, {
+        type: '{{ second_chart_type }}',
+        data: {{ second_chart_data|safe }},
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'right'
+                },
+                datalabels: {
+                    color: 'black',                   
+                    font: {
+                        weight: 'bold'
+                    },
+                    formatter: Math.round,
+                    value : {
+                        display: true,
+                        color: 'black',
+                        font: {
+                            weight: 'bold'
+                        }
+                    }
+                }
+            },
+        }
+    });
+
+    var ctx3 = document.getElementById('chartNumberOfStudentsPerCategory').getContext('2d');
+    var chartNumberOfStudentsPerCategory = new Chart(ctx3, {
+        type: '{{ third_chart_type }}',
+        data: {{ third_chart_data|safe }},
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                },
+                x: {
+                    display: true
+                },                    
+            },
+            plugins: {
+                legend: {
+                    position: 'right'
+                },
+                datalabels: {
+                    color: 'black',                   
+                    font: {
+                        weight: 'bold'
+                    },
+                    formatter: Math.round,
+                    value : {
+                        display: true,
+                        color: 'black',
+                        font: {
+                            weight: 'bold'
+                        }
+                    }
+                }
+            },
+        }
+    });
+</script>
+{% endblock %}
