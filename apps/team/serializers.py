@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from apps.account.models import Lecturer, Student
-from apps.team.models import Team, TeamTask, TeamVacancies
+from apps.team.models import Team, TeamApply, TeamTask, TeamVacancies
 from utils.exceptions import failure_response_validation
 
 
@@ -69,6 +69,24 @@ class TeamVacanciesSerializer(serializers.ModelSerializer):
         if team.status != 'ACTIVE':
             raise failure_response_validation('Team is not active')
         return data
+class TeamApplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeamApply
+        fields = '__all__'
+        read_only_fields = ('id', 'vacancies', 'user', 'created_at')
+        extra_kwargs = {
+            'resume': {'write_only': True},
+        }
+        
+    def validate(self, data):
+        vacancies = self.context['vacancies']
+        user = self.context['request'].user
+        if vacancies.team.status != 'ACTIVE':
+            raise failure_response_validation('Team is not active')
+        if vacancies.team.members.filter(user=user).exists():
+            raise failure_response_validation('You are already a member of this team')
+        return data
+    
     
 class TeamTaskSerializer(serializers.ModelSerializer):
     class Meta:

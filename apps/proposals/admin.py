@@ -3,7 +3,7 @@ from apps.account.models import Lecturer
 from django.utils.html import format_html
 
 from apps.proposals.form import StageAssesment1Form, StageAssesment1InlineFormSet, StageAssesment2Form
-from apps.proposals.models import AssesmentSubmissionsProposal, KeyStageAssesment1, KeyStageAssesment2, LecturerTeamSubmissionApply, Proposal, ProposalIdeaContribute, StageAssesment1, StageAssesment2, SubmissionProposal, SubmissionsProposalApply
+from apps.proposals.models import AssesmentSubmissionsProposal, KeyStageAssesment1, KeyStageAssesment2, LecturerTeamSubmissionApply, Proposal, StageAssesment1, StageAssesment2, SubmissionProposal, SubmissionsProposalApply
 
 
 
@@ -27,6 +27,7 @@ class SubmissionsProposalApplyAdmin(admin.ModelAdmin):
     list_display = ('id', 'submission_information', 'lecturer', 'status')
     search_fields = ('submission__title', 'title', 'status')
     list_display_links = ('id', 'submission_information')
+    list_editable = ['status']
 
     def submission_information(self, obj):
         return obj.submission.title
@@ -42,11 +43,6 @@ class SubmissionsProposalAdmin(admin.ModelAdmin):
     program_name.short_description = 'Program'
 
 
-@admin.register(ProposalIdeaContribute)
-class ProposalIdeaContributeAdmin(admin.ModelAdmin):
-    model = ProposalIdeaContribute
-    list_display = ('id', 'title', 'status')
-    search_fields = ('title', 'status', )
 
 @admin.register(Proposal)
 class ProposalsAdmin(admin.ModelAdmin):

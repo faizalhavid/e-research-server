@@ -1,7 +1,7 @@
 from rest_framework import viewsets, permissions, filters
 from apps.account.models import Student
-from apps.team.models import Team, TeamTask, TeamVacancies
-from apps.team.serializers import TeamSerializer, TeamTaskSerializer, TeamVacanciesSerializer
+from apps.team.models import Team, TeamApply, TeamTask, TeamVacancies
+from apps.team.serializers import TeamApplySerializer, TeamSerializer, TeamTaskSerializer, TeamVacanciesSerializer
 from django.db.models import Q, Case, When, BooleanField
 
 from utils.permissions import IsLeaderOrMembers, IsStudent
@@ -59,6 +59,15 @@ class TeamVacanciesViewSet(viewsets.ModelViewSet):
             return TeamVacancies.objects.none()
         
         return TeamVacancies.objects.filter(team=team).filter(Q(team__leader=student) | Q(team__members=student))
+
+class TeamApplyViewSet(viewsets.ModelViewSet):
+    queryset = TeamApply.objects.all()
+    serializer_class = TeamApplySerializer
+    permission_classes = (permissions.IsAuthenticated, IsStudent)
+    lookup_field = 'vacancies_id'
+
+ 
+
 
 class TeamTaskViewSet(viewsets.ModelViewSet):
     queryset = TeamTask.objects.all()

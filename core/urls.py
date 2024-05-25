@@ -7,9 +7,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from apps.account.views import *
 from apps.content_hub.views import ArticleViewSet, NoticeViewSet
+from apps.notification.views import NotificationViewSet
 from apps.pkm.views import PKMActivityScheduleViewSet, PKMIdeaContributeViewSet, PKMSchemeList
 from apps.proposals.views import ProposalViewSet, SubmissionProposalApplyViewSet, TagListView
-from apps.team.views import TeamTaskViewSet, TeamVacanciesViewSet, TeamViewSet
+from apps.team.views import TeamApplyViewSet, TeamTaskViewSet, TeamVacanciesViewSet, TeamViewSet
 
 
 schema_view = views.get_schema_view(
@@ -32,11 +33,14 @@ router.register(r'proposals/(?P<team_id>\d+)', ProposalViewSet, basename='propos
 router.register(r'proposals/submission-apply/(?P<team_id>\d+)', SubmissionProposalApplyViewSet, basename='submission-apply')
 
 router.register(r'team', TeamViewSet, basename='team')
-router.register(r'team/vacancies', TeamVacanciesViewSet, basename='teamvacancies')
+router.register(r'team/vacancies', TeamVacanciesViewSet, basename='team-vacancies')
+router.register(r'team/vacancies/applications', TeamApplyViewSet, basename='team-applications')
 router.register(r'team/tasks', TeamTaskViewSet, basename='teamtasks')
 
 router.register(r'content-hub/notice', NoticeViewSet, basename='notice')
 router.register(r'content-hub/article', ArticleViewSet, basename='article')
+
+router.register(r'notifications', NotificationViewSet, basename='notifications')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -55,7 +59,7 @@ urlpatterns = [
         path('resend-activation/<int:user_id>', ResendEmailActivation.as_view(), name='resend-activation'),
         path('user-profile', UserProfileView.as_view(), name='user-profile'),
     ])), 
-    
+
     path('proposals/tag', TagListView.as_view(), name='proposal-tag'),   
 
     ])),

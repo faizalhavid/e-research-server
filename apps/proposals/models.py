@@ -173,37 +173,6 @@ class StageAssesment2(models.Model):
         return f"{self.assesment.submission_apply.submission.title} - {self.key_assesment.title}: {self.score}"
 
 
-class ProposalIdeaContribute(models.Model):
-    title = models.CharField(max_length=200)
-    description = models.TextField()
-    problem = models.TextField()
-    solution = models.TextField()
-    user = models.ForeignKey('account.User', related_name='ideas', on_delete=models.CASCADE)
-    team = models.ForeignKey('team.Team', related_name='ideas', on_delete=models.CASCADE, blank=True,null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    illustration = models.ImageField(upload_to=UploadToPathAndRename(os.path.join('proposals', 'proposal_idea_contribute/illustration')), blank=True, null=True)
-    file = models.FileField(upload_to=UploadToPathAndRename(os.path.join('proposals', 'proposal_idea_contribute/file')), blank=True, null=True)
-    STATUS = (
-        ('SUBMITTED', 'Submitted'),
-        ('ACCEPTED', 'Accepted'),
-        ('REJECTED', 'Rejected'),
-    )
-    status = models.CharField(max_length=10, choices=STATUS, default='SUBMITTED')
-    tags = TaggableManager(blank=True, related_name='ideas')
-    applied_at = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        verbose_name_plural = '4. Ide Usulan Proposal'
-
-    def __str__(self):
-        return self.title - self.user.full_name
-    
-    def save(self, *args, **kwargs):
-        if self.team and not self.applied_at:
-            self.applied_at = timezone.now()
-        super().save(*args, **kwargs)
-    
-    
 
 class Proposal(models.Model):
     team = models.ForeignKey('team.Team', related_name='proposals', on_delete=models.CASCADE, null=True, blank=True)
