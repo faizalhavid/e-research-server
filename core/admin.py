@@ -103,7 +103,7 @@ from core.admin import AdminChartMixin
 # admin_site.register(Major, MajorAdmin)
 
 # admin_site.register(Team, TeamAdmin)
-# admin_site.register(TeamVacanicies, TeamVacaniciesAdmin)
+# admin_site.register(TeamVacancies, TeamVacanciesAdmin)
 # admin_site.register(TeamApply, TeamApplyAdmin)
 
 # admin_site.register(PKMProgram, PKMProgramAdmin)

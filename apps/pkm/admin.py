@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.pkm.models import PKMActivitySchedule, PKMProgram, PKMScheme
+from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMProgram, PKMScheme
 from apps.proposals.models import SubmissionProposal
 
 # Register your models here.
@@ -29,3 +29,9 @@ class PKMSchemeAdmin(admin.ModelAdmin):
     model = PKMScheme
     list_display = ('id', 'name', 'description')
     search_fields = ('name', 'description', )
+
+
+@admin.register(PKMIdeaContribute)
+class PKMIdeaContributeAdmin(admin.ModelAdmin):
+    list_display = ['title', 'status', 'created']
+    search_fields = ['title', 'description']

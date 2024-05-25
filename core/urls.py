@@ -6,8 +6,10 @@ from rest_framework import permissions, routers
 from django.conf import settings
 from django.conf.urls.static import static
 from apps.account.views import *
+from apps.content_hub.views import ArticleViewSet, NoticeViewSet
+from apps.pkm.views import PKMActivityScheduleViewSet, PKMIdeaContributeViewSet, PKMSchemeList
 from apps.proposals.views import ProposalViewSet, SubmissionProposalApplyViewSet, TagListView
-from apps.team.views import TeamViewSet
+from apps.team.views import TeamTaskViewSet, TeamVacanciesViewSet, TeamViewSet
 
 
 schema_view = views.get_schema_view(
@@ -22,9 +24,20 @@ schema_view = views.get_schema_view(
 
 router = routers.DefaultRouter(trailing_slash=False)
 
+router.register(r'pkm/idea-contribute', PKMIdeaContributeViewSet, basename='idea-contribute')
+router.register(r'pkm/scheme', PKMSchemeList, basename='scheme')
+router.register(r'pkm/activity-schedule', PKMActivityScheduleViewSet, basename='activity-schedule')
+
 router.register(r'proposals/(?P<team_id>\d+)', ProposalViewSet, basename='proposals')
 router.register(r'proposals/submission-apply/(?P<team_id>\d+)', SubmissionProposalApplyViewSet, basename='submission-apply')
+
 router.register(r'team', TeamViewSet, basename='team')
+router.register(r'team/vacancies', TeamVacanciesViewSet, basename='teamvacancies')
+router.register(r'team/tasks', TeamTaskViewSet, basename='teamtasks')
+
+router.register(r'content-hub/notice', NoticeViewSet, basename='notice')
+router.register(r'content-hub/article', ArticleViewSet, basename='article')
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include([
@@ -42,10 +55,8 @@ urlpatterns = [
         path('resend-activation/<int:user_id>', ResendEmailActivation.as_view(), name='resend-activation'),
         path('user-profile', UserProfileView.as_view(), name='user-profile'),
     ])), 
+    
     path('proposals/tag', TagListView.as_view(), name='proposal-tag'),   
-
-
-
 
     ])),
 

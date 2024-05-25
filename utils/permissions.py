@@ -1,14 +1,41 @@
 from rest_framework import permissions
 from django.core.exceptions import ObjectDoesNotExist
 
-from team.models import Team
+from apps.team.models import Team
 
 
-class IsStudent(permissions.BasePermission):
+
+class BasePermission(permissions.BasePermission):
     def has_permission(self, request, view):
+
+        if request.user.is_superuser:
+            return True
+        # By default, don't allow access
+        return False
+
+class IsStudent(BasePermission):
+    def has_permission(self, request, view):
+        # If the user is a super admin, allow access
+        if super().has_permission(request, view):
+            return True
+        # Otherwise, check if the user is a student
         if request.user and request.user.groups.filter(name='Student'):
             return True
         return False
+class IsLeaderOrMembers(BasePermission):
+    def has_permission(self, request, view):
+        
+        if super().has_permission(request, view):
+            return True
+        
+        team_id = view.kwargs.get('team_id')
+        if not team_id:
+            return False
+        try:
+            team = Team.objects.get(id=team_id)
+        except ObjectDoesNotExist:
+            return False
+        return team.leader == request.user or request.user in team.members.all()
     
 
 class IsLecturer(permissions.BasePermission):
@@ -16,6 +43,7 @@ class IsLecturer(permissions.BasePermission):
         if request.user and request.user.groups.filter(name='Lecturer'):
             return True
         return False
+    
 class IsLecturerReviewer(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.user and request.user.groups.filter(name='LecturerReviewer'):
@@ -34,6 +62,23 @@ class IsAdmin(permissions.BasePermission):
         if request.user and request.user.groups.filter(name='Admin'):
             return True
         return False
+    
+class isSuperAdmin(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_superuser:
+            return True
+        
+class IsLeaderOrMembersTeamOwner(permissions.BasePermission):
+    def has_permission(self, request, view):
+        team_id = view.kwargs.get('team_id')
+        if not team_id:
+            return False
+        try:
+            team = Team.objects.get(id=team_id)
+        except ObjectDoesNotExist:
+            return False
+        return team.leader == request.user or request.user in team.members.all()
+    
     
 class IsGuest(permissions.BasePermission):
     def has_permission(self, request, view):

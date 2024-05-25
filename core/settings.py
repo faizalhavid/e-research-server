@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from datetime import timedelta
 import os
 from pathlib import Path
 from decouple import config
@@ -59,6 +60,7 @@ INSTALLED_APPS = [
     'apps.pkm',
     'apps.team',
     'apps.notification',
+    'apps.content_hub',
 
 
 ]
@@ -198,6 +200,16 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend', ],
 }
+
+
+# SIMPLE JWT
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'JWT_ALLOW_REFRESH': True,
+    'JWT_EXPIRATION_DELTA': timedelta(seconds=60 * 60 * 24 * 7),
+}
+SESSION_COOKIE_AGES = 60 * 60 * 24 * 7 # 7 days
 
 
 # OTHER SETTINGS

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from apps.account.models import Lecturer, Student
-from apps.team.models import Team
+from apps.team.models import Team, TeamTask, TeamVacancies
 from utils.exceptions import failure_response_validation
 
 
@@ -12,11 +12,9 @@ class MemberSerializers(serializers.ModelSerializer):
         read_only_fields = ('id', 'full_name', 'phone_number', 'image')
 
 class TeamSerializer(serializers.ModelSerializer):
-    leader = serializers.PrimaryKeyRelatedField(queryset=Student.objects.all())
     image = serializers.ImageField(max_length=None, use_url=True, allow_null=True, required=False)
-    lecturer = serializers.PrimaryKeyRelatedField(queryset=Lecturer.objects.all(), allow_null=True, required=False)
-    members = serializers.PrimaryKeyRelatedField(many=True, queryset=Student.objects.all())
-
+    members = serializers.ListField(child=serializers.IntegerField(), write_only=True)
+    lecturer = serializers.PrimaryKeyRelatedField(queryset=Lecturer.objects.all())
     class Meta:
         model = Team
         fields = '__all__'
@@ -26,14 +24,17 @@ class TeamSerializer(serializers.ModelSerializer):
         }
         
     def validate(self, data):
-        leader = data.get('leader')
+        user = self.context['request'].user
+        leader = Student.objects.get(user=user) if not user.is_superuser else None
         members = data.get('members')
-        print(data)
-        print(members)
+        lecturer = data.get('lecturer')
 
         if Team.objects.filter(leader=leader, status='ACTIVE').exists():
             raise failure_response_validation({'leader': 'You only can be a leader in one active team'})
     
+        if Team.objects.filter(lecturer=lecturer, status='ACTIVE').count >= 10:
+            raise failure_response_validation('The lecturer has reached the maximum number of teams')
+
         if leader in members:
             raise failure_response_validation({'members': 'Leader cannot also be a member'})
     
@@ -47,6 +48,39 @@ class TeamSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         response = super().to_representation(instance)
+
         response['leader'] = MemberSerializers(instance.leader).data
         response['members'] = MemberSerializers(instance.members.all(), many=True).data
         return response
+    
+
+
+class TeamVacanciesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeamVacancies
+        fields = '__all__'
+        read_only_fields = ('id', 'team', 'created_at', 'closed_at')
+        extra_kwargs = {
+            'description': {'write_only': True},
+        }
+        
+    def validate(self, data):
+        team = self.context['team']
+        if team.status != 'ACTIVE':
+            raise failure_response_validation('Team is not active')
+        return data
+    
+class TeamTaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeamTask
+        fields = '__all__'
+        read_only_fields = ('id', 'team', 'created_at', 'due_time')
+        extra_kwargs = {
+            'description': {'write_only': True},
+        }
+        
+    def validate(self, data):
+        team = self.context['team']
+        if team.status != 'ACTIVE':
+            raise failure_response_validation('Team is not active')
+        return data

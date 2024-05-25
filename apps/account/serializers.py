@@ -11,10 +11,18 @@ from utils.exceptions import failure_response_validation, success_response
 
 
 
+from django.contrib.auth.models import Group
+
 class UserSerializer(serializers.ModelSerializer):
+    groups = serializers.SlugRelatedField(
+        many=True,
+        slug_field='name',
+        read_only=True
+    )
+
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name','groups')
+        fields = ('id', 'email', 'first_name', 'last_name', 'groups')
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -155,9 +163,10 @@ class LoginSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         user_representation = UserSerializer(instance).data
-        if instance.groups.filter(name='Student').exists() and Student.objects.filter(user=instance).exists():
-            student = Student.objects.get(user=instance)
-            user_representation['student'] = StudentSerializer(student).data
+        # return student data if user is student
+        # if instance.groups.filter(name='Student').exists() and Student.objects.filter(user=instance).exists():
+        #     student = Student.objects.get(user=instance)
+        #     user_representation['student'] = StudentSerializer(student).data
 
         return user_representation
     

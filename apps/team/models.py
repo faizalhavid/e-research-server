@@ -26,30 +26,10 @@ class Team(models.Model):
     def __str__(self):
         return self.name 
     
-    def save(self, *args, **kwargs):
-        # Check if the leader is a student
-        if not isinstance(self.leader, Student):
-            raise ValidationError('Leader must be a Student instance')
-
-        # Check if the leader is also a member
-        if self.leader in self.members.all():
-            raise ValidationError('Leader cannot be a member')
-
-        # Check if the leader already created a team
-        if Team.objects.filter(leader=self.leader).exists():
-            raise ValidationError('Leader has already created a team')
-
-        # Check if any member is in more than 3 teams
-        for member in self.members.all():
-            if Team.objects.filter(members=member).count() >= 3:
-                raise ValidationError(f'Member {member} is in more than 3 teams')
-
-        super().save(*args, **kwargs)
-    
-    
 
 
-class TeamVacanicies(models.Model):
+
+class TeamVacancies(models.Model):
     team = models.ForeignKey(Team, related_name='vacancies', on_delete=models.CASCADE)
     description = models.TextField()
     role = models.CharField(max_length=200)
@@ -62,7 +42,7 @@ class TeamVacanicies(models.Model):
 
     
 class TeamApply(models.Model):
-    vacanicies = models.ForeignKey(TeamVacanicies, related_name='applies', on_delete=models.CASCADE)
+    vacanicies = models.ForeignKey(TeamVacancies, related_name='applies', on_delete=models.CASCADE)
     user = models.ForeignKey('account.User', related_name='applies', on_delete=models.CASCADE)
     STATUS = (
         ('APPLIED', 'Applied'),

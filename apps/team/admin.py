@@ -3,7 +3,7 @@ from django.contrib import admin
 
 from apps.account.models import Student
 from apps.proposals.models import Proposal
-from apps.team.models import Team, TeamApply, TeamVacanicies
+from apps.team.models import Team, TeamApply, TeamVacancies
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
@@ -23,9 +23,9 @@ class TeamAdmin(admin.ModelAdmin):
 
 
 
-@admin.register(TeamVacanicies)
-class TeamVacaniciesAdmin(admin.ModelAdmin):
-    model = TeamVacanicies
+@admin.register(TeamVacancies)
+class TeamVacanciesAdmin(admin.ModelAdmin):
+    model = TeamVacancies
     list_display = ('id',  'description', 'role', 'team')
     search_fields = ( 'description', 'role', 'team__name')
 

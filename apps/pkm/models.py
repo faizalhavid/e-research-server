@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils import timezone
+import slugify
+from taggit.managers import TaggableManager
 
 class PKMProgram(models.Model):
     name = models.CharField(max_length=50, blank=True)
@@ -43,3 +45,33 @@ class PKMScheme(models.Model):
     def __str__(self):
         return self.name
     
+class PKMIdeaContribute(models.Model):
+    title = models.CharField(max_length=100)
+    description = models.TextField(blank=True, default='')
+    attachment = models.FileField(upload_to='pkm/idea_contribute/', blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    problem = models.TextField(blank=True, default='')
+    solution = models.TextField(blank=True, default='')
+    tags = TaggableManager()
+    slug = models.SlugField(unique=True)
+    image = models.ImageField(upload_to='pkm/idea_contribute/', blank=True, null=True)
+    document = models.FileField(upload_to='pkm/idea_contribute/', blank=True, null=True)
+    STATUS_CHOICES = (
+        ('D', 'Draft'),
+        ('P', 'Published'),
+        ('A', 'Archived'),
+        ('R', 'Rejected'),
+    )
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='D')
+    applied_date = models.DateTimeField(blank=True, null=True)
+    
+    class Meta:
+        verbose_name = 'Idea Contribute'
+        verbose_name_plural = 'Idea Contribute'
+    def __str__(self):
+        return self.title
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)

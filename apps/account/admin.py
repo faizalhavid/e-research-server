@@ -10,6 +10,8 @@ from django.contrib.auth.hashers import make_password
 from taggit.models import Tag
 from django.utils.html import format_html
 
+from apps.proposals.models import SubmissionsProposalApply
+
 
 class StudentInline(admin.StackedInline):
     model = Student
@@ -187,42 +189,42 @@ class LecturerModelResource(resources.ModelResource):
         return row
 
 
-# @admin.register(Lecturer)
-# class LecturerAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-#     resource_class = LecturerModelResource
-#     list_display = ('nidn', 'full_name', 'department', 'get_count_be_lecturer_supervisor', 'lecturer_reviewer_status')
-#     list_display_links = ('nidn', 'full_name')
-#     search_fields = ('full_name', 'nidn')
-#     list_display_links = ('nidn', 'full_name')
-#     list_filter = ['department', LecturerReviewerStatusFilter]
-#     list_per_page = 15
-#     ordering = ('full_name', 'department')
-#     readonly_fields = ('lecturer_image','get_count_be_lecturer_supervisor', 'lecturer_reviewer_status')
-#     fieldsets = (
-#         (None, {
-#             'fields': ('nidn', 'full_name', 'department', 'image', 'lecturer_image','user')
-#         }),
-#     )
-#     actions = [make_lecturer_reviewer, remove_lecturer_reviewer]
+@admin.register(Lecturer)
+class LecturerAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    resource_class = LecturerModelResource
+    list_display = ('nidn', 'full_name', 'department', 'get_count_be_lecturer_supervisor', 'lecturer_reviewer_status')
+    list_display_links = ('nidn', 'full_name')
+    search_fields = ('full_name', 'nidn')
+    list_display_links = ('nidn', 'full_name')
+    list_filter = ['department', LecturerReviewerStatusFilter]
+    list_per_page = 15
+    ordering = ('full_name', 'department')
+    readonly_fields = ('lecturer_image','get_count_be_lecturer_supervisor', 'lecturer_reviewer_status')
+    fieldsets = (
+        (None, {
+            'fields': ('nidn', 'full_name', 'department', 'image', 'lecturer_image','user')
+        }),
+    )
+    actions = [make_lecturer_reviewer, remove_lecturer_reviewer]
     
 
-#     def get_queryset(self, request):
-#         qs = super().get_queryset(request)
-#         if request.user.groups.filter(name='LecturerReviewer').exists():
-#             return qs.filter(user=request.user)
-#         return qs
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.groups.filter(name='LecturerReviewer').exists():
+            return qs.filter(user=request.user)
+        return qs
     
-#     def get_count_be_lecturer_supervisor(self, obj):
-#         count = SubmissionsProposalApply.objects.filter(team__lecturer=obj).count()
-#         if count > 10:
-#             return format_html('<span style="color: red;">{}</span>', count)
-#         else:
-#             return count
-#     get_count_be_lecturer_supervisor.short_description = 'Jumlah Team yang di bimbing'
+    def get_count_be_lecturer_supervisor(self, obj):
+        count = SubmissionsProposalApply.objects.filter(team__lecturer=obj).count()
+        if count > 10:
+            return format_html('<span style="color: red;">{}</span>', count)
+        else:
+            return count
+    get_count_be_lecturer_supervisor.short_description = 'Jumlah Team yang di bimbing'
 
     
     def lecturer_reviewer_status(self, obj):
-        if obj.user.groups.filter(name='LecturerReviewer').exists():
+        if obj.user and obj.user.groups.filter(name='LecturerReviewer').exists():
             return format_html('<span style="color: green;">&#10004;</span>')  # Checkmark
         else:
             return format_html('<span style="color: red;">&#10060;</span>')  # Cross
@@ -247,6 +249,7 @@ class UserModelResource(resources.ModelResource):
             'PASSWORD': 'password',
             'GROUPS': 'groups',
         }
+        
 
     def get_export_headers(self):
         headers = super().get_export_headers()
@@ -275,7 +278,8 @@ class UserAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     list_display_links = ['id','email']
     list_display = ('id','email','user_role','online_status')
     search_fields = ('email', 'first_name', 'last_name')
-    
+    # for debug
+    inlines = [StudentInline, LecturerInline]
     ordering = ('email',)
     filter_horizontal = ('groups', 'user_permissions')
 

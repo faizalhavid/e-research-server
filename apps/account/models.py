@@ -52,6 +52,8 @@ class User(AbstractUser):
     object = UserManager()
     
     def save(self, *args, **kwargs):
+        if not self.username:
+            self.username = self.email.split('@')[0]
         super().save(*args, **kwargs) 
         if self.is_superuser:  # Don't change is_staff for superusers
             if self.groups.exists():
@@ -129,11 +131,10 @@ class Lecturer(UserProfile):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        lecturer_group, created = Group.objects.get_or_create(name='Lecturer')
-        lecturer_reviewer_group, created = Group.objects.get_or_create(name='LecturerReviewer')
-        self.user.groups.add(lecturer_group)
-        self.user.groups.add(lecturer_reviewer_group)
-
+        if self.user : 
+            lecturer_group, created = Group.objects.get_or_create(name='Lecturer')
+            self.user.groups.add(lecturer_group)
+            
     def __str__(self):
         return self.full_name
 
