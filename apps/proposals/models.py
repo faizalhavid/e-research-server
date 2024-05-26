@@ -93,8 +93,8 @@ class LecturerTeamSubmissionApply(models.Model):
 
     
     class Meta:
-        verbose_name = 'Plot Team Mahasiswa - Reviewer'
-        verbose_name_plural = 'Plot Team Mahasiswa - Reviewer'
+        verbose_name = '3. Plot Team Mahasiswa - Reviewer'
+        verbose_name_plural = '3. Plot Team Mahasiswa - Reviewer'
         
 
             
@@ -106,7 +106,7 @@ class AssesmentSubmissionsProposal(models.Model):
 
     class Meta:
         unique_together = ('submission_apply', 'reviewer',)
-        verbose_name_plural = '3.Penilaian Proposal'
+        verbose_name_plural = 'Penilaian Proposal'
 
     def __str__(self):
         return f"{self.submission_apply.team.name} - Reviewed by : {self.reviewer.full_name}"

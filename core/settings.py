@@ -26,7 +26,7 @@ SECRET_KEY = config('DJANGO_SECRET_KEY')
 DEBUG = config('DEBUG', default='TRUE', cast=bool)
 BASE_URL = config('BASE_URL', default='http://localhost:8000')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -154,10 +154,14 @@ CORS_ALLOW_HEADERS = ["*"]
 # TEMPLATE, MEDIA AND STATIC
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
 
+STATIC_DIR = BASE_DIR / 'static'
+if not os.path.exists(STATIC_DIR):
+    os.makedirs(STATIC_DIR)
+
+STATICFILES_DIRS = [
+    STATIC_DIR,
+]
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = '/media/'
 STATICFILES_FINDERS = (

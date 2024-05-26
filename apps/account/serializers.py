@@ -354,7 +354,7 @@ class ResetPasswordSerializer(serializers.ModelSerializer):
         user = User.objects.filter(id=user_id, string_activation=attrs['string_activation']).first()
         
         if not user:
-            message = 'User does not exist' if not User.objects.filter(id=user_id).exists() else 'Activation string is expired'
+            message = 'User does not exist' if not User.objects.filter(id=user_id).exists() else 'this link has expired'
             raise failure_response_validation(message, 'validation')
 
         if attrs['password'] != attrs['password2']:
@@ -386,7 +386,9 @@ class ForgetPasswordMail(serializers.ModelSerializer):
         fields = ('id', 'email')
 
     def validate(self, attrs):
+        print(attrs)
         user = User.objects.filter(email=attrs['email'])
+        print(user)
         if not user:
             raise failure_response_validation('Your account does not exist', 'validation')
         return attrs

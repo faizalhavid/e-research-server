@@ -1,5 +1,7 @@
 from django import forms
-from proposals.models import PKMProgram
+
+from apps.pkm.models import PKMProgram
+
 
 
 class PeriodForm(forms.Form):

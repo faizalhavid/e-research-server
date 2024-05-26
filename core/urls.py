@@ -1,4 +1,4 @@
-from django.contrib import admin
+
 from django.urls import include, path, re_path
 from drf_yasg import views, openapi
 from rest_framework import permissions, routers
@@ -11,6 +11,9 @@ from apps.notification.views import NotificationViewSet
 from apps.pkm.views import PKMActivityScheduleViewSet, PKMIdeaContributeViewSet, PKMSchemeList
 from apps.proposals.views import ProposalViewSet, SubmissionProposalApplyViewSet, TagListView
 from apps.team.views import TeamApplyViewSet, TeamTaskViewSet, TeamVacanciesViewSet, TeamViewSet
+from core.admin import admin_site
+
+
 
 
 schema_view = views.get_schema_view(
@@ -43,7 +46,7 @@ router.register(r'content-hub/article', ArticleViewSet, basename='article')
 router.register(r'notifications', NotificationViewSet, basename='notifications')
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', admin_site.urls),
     path('api/', include([
     path('', schema_view.with_ui('swagger', cache_timeout=0), name="schema-swagger-ui"),
     path('', include(router.urls)),

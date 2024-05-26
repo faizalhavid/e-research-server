@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.forms import BaseInlineFormSet, model_to_dict
 from apps.account.models import Lecturer
 from django.utils.html import format_html
 
@@ -65,17 +66,30 @@ class KeyStageAssesment2Admin(admin.ModelAdmin):
     model = KeyStageAssesment2
     list_display = ('id', 'title')
 
+
+class PrePopulatedFormSet(BaseInlineFormSet):
+    def get_initial(self):
+        initial = super().get_initial()
+        if self.queryset.exists():
+            initial.extend(model_to_dict(instance) for instance in self.queryset)
+        return initial
+
+    def get_queryset(self):
+        if not hasattr(self, '_queryset'):
+            criteria = {}  # Your criteria here
+            qs = super().get_queryset().filter(**criteria)
+            self._queryset = qs
+        return self._queryset
+
 class StageAssesment1Inline(admin.TabularInline):
     model = StageAssesment1
-    form = StageAssesment1Form
-    formset = StageAssesment1InlineFormSet
-    extra = 0
-    can_delete = False 
+    formset = PrePopulatedFormSet
+    
 
 class StageAssesment2Inline(admin.TabularInline):
     model = StageAssesment2
-    form = StageAssesment2Form
-    extra = 0
+    formset = PrePopulatedFormSet
+    
 
 @admin.register(AssesmentSubmissionsProposal)
 class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
@@ -89,7 +103,7 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
     readonly_fields = ('reviewed_at', 'proposal_file_url')  # Add proposal_file_url here
     fieldsets = (
         ('Proposal Mahasiswa', {
-            'fields': ('submission_apply', 'reviewer', 'status', 'reviewed_at', 'proposal_file_url'),
+            'fields': ('submission_apply', 'reviewer',  'reviewed_at', 'proposal_file_url'),
         }),
     )
     list_display_links = ['submission_information']  
@@ -129,8 +143,8 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
         return f"{proposal.title} - {team}"
     
     def status_colored(self, obj):
-        color = 'green' if obj.status == 'approved' else 'red'
-        return format_html('<span style="color: {};">{}</span>', color, obj.status)
+        color = 'red' if obj.submission_apply.status == 'Rejected' else 'green'
+        return format_html('<span style="color: {};">{}</span>', color, obj.submission_apply.status)
     status_colored.short_description = 'Status'
 
 @admin.register(StageAssesment1)
