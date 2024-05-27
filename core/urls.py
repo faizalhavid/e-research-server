@@ -45,6 +45,11 @@ router.register(r'content-hub/article', ArticleViewSet, basename='article')
 
 router.register(r'notifications', NotificationViewSet, basename='notifications')
 
+router.register(r'accounts/student', StudentViewSet, basename='student')
+router.register(r'accounts/lecturer', LecturerViewSet, basename='lecturer')
+
+
+
 urlpatterns = [
     path('admin/', admin_site.urls),
     path('api/', include([

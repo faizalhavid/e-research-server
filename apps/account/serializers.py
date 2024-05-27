@@ -186,10 +186,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     )
     user_type = serializers.ChoiceField(choices=USER_TYPE_CHOICES, default='guest')
     nrp = serializers.CharField(required=False)
+    agency = serializers.CharField(required=False)
     
     class Meta:
         model = User
-        fields = ('id', 'email', 'password', 'password2', 'first_name', 'last_name','user_type','nrp')
+        fields = ('id', 'email', 'password', 'password2', 'first_name', 'last_name','user_type','nrp','agency')
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True},
@@ -240,6 +241,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
+            
+            agency=validated_data.get('agency', None),  
         
         )
         user.is_active = False

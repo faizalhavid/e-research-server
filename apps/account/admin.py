@@ -318,7 +318,7 @@ class UserAdmin(ImportExportModelAdmin, admin.ModelAdmin):
             return super().get_fieldsets(request, obj)
         return (
             ('Account', {'fields': ('email', 'password','user_role')}),
-            ('Personal info', {'fields': ('first_name', 'last_name')}),
+            ('Personal info', {'fields': ('first_name', 'last_name','agency')}),
             ('Permissions', {'fields': ('is_active', 'groups')}),
             ('Important dates', {'fields': ('last_login', 'date_joined')}),
             ('User actions', {'fields': ('log_entries',)}),

@@ -13,6 +13,7 @@ from apps.account.filter import LecturerFilter, StudentFilter
 from apps.account.serializers import *
 from utils.exceptions import failure_response, success_response
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets
 
 class LoginToken(generics.CreateAPIView):
     serializer_class = LoginSerializer
@@ -243,29 +244,20 @@ class RefreshTokenView(generics.CreateAPIView):
 
 
 
-class StudentListView(generics.ListAPIView):
+
+
+class StudentViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = StudentSerializer
     queryset = Student.objects.all()
     filterset_class = StudentFilter
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['full_name']
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
-class StudentRetrieveView(generics.RetrieveAPIView):
-    serializer_class = StudentSerializer
-    queryset = Student.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
-
-
-class LecturerListView(generics.ListAPIView):
+class LecturerViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = LecturerSerializer
     queryset = Lecturer.objects.all()
     filterset_class = LecturerFilter
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['full_name']
-    permission_classes = [permissions.IsAuthenticated]
-
-class LecturerRetrieveView(generics.RetrieveAPIView):
-    serializer_class = LecturerSerializer
-    queryset = Lecturer.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]

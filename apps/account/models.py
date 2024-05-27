@@ -47,7 +47,9 @@ class User(AbstractUser):
     username = models.CharField(max_length=50, unique=False, blank=True)
     string_activation = models.CharField(max_length=100, blank=True, default='')
     last_activity = models.DateTimeField(null=True, blank=True)
+    agency = models.CharField(max_length=100, blank=True, null=True, default='')
     USERNAME_FIELD = 'email'
+    
     REQUIRED_FIELDS = []
     object = UserManager()
     
@@ -72,6 +74,8 @@ class UserProfile(models.Model):
     address = models.CharField(max_length=100, blank=True, default='')
     phone_number = models.CharField(max_length=20, blank=True, default='')
     birth_date = models.DateField(null=True, blank=True)
+
+    
     def __str__(self):
         return self.full_name
     
