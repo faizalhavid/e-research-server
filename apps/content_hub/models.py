@@ -2,7 +2,7 @@ import hashlib
 from django.utils import timezone
 from django.db import models
 from ckeditor.fields import RichTextField
-import slugify
+from django.utils.text import slugify
 from apps.account.models import User
 from utils.exceptions import failure_response_validation
 from utils.handle_file_upload import UploadToPathAndRename
@@ -24,14 +24,14 @@ class Notice(models.Model):
         default='medium'
     )
     attachment = models.FileField(upload_to=UploadToPathAndRename('notice/attachments/'), blank=True, null=True)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(unique=True, blank=True, null=True)
 
     def __str__(self):
         return self.title
     
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = hashlib.sha256(self.title.encode()).hexdigest()
+            self.slug = hashlib.sha256(self.title.encode()).hexdigest()[:15]
         super().save(*args, **kwargs)
     
 
@@ -39,17 +39,18 @@ class Article(models.Model):
     title = models.CharField(max_length=100)
     author = models.ForeignKey('account.User', on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
-    image = models.ImageField(upload_to='articles/', default='articles/default.jpg')
+    image = models.ImageField(upload_to='articles/', default='articles/default.jpg', blank=True, null=True)
+    excerpt = models.TextField(blank=True, null=True,verbose_name='kutipan')
     STATUS_CHOICES = (
         ('D', 'Draft'),
         ('P', 'Published'),
         ('A', 'Archived')
     )
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='D')
-    likes = models.IntegerField(default=0)
-    view = models.IntegerField(default=0)
+    likes = models.IntegerField(default=0, blank=True, null=True)
+    view = models.IntegerField(default=0, blank=True, null=True)
     content = RichTextField()
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(unique=True, blank=True, null=True)
 
     def __str__(self):
         return self.title
@@ -60,6 +61,8 @@ class Article(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.title)
+        if not self.excerpt:
+            self.excerpt = self.content[:100]
         super().save(*args, **kwargs)
 
     

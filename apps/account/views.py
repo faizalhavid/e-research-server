@@ -26,8 +26,8 @@ class LoginToken(generics.CreateAPIView):
         refresh = RefreshToken.for_user(user)
         user_data = LoginSerializer(user, context=self.get_serializer_context()).data
         response = success_response('User logged in successfully',{'user': user_data, 'access': str(refresh.access_token), 'refresh': str(refresh)})
-        # response.set_cookie('refresh', str(refresh), httponly=True, samesite='Strict')
-        # response.set_cookie('access', str(refresh.access_token), httponly=True, samesite='Strict')
+        response.set_cookie('refresh', str(refresh), httponly=True, samesite='Strict')
+        response.set_cookie('access', str(refresh.access_token), httponly=True, samesite='Strict')
         return response
 
 class Register(generics.CreateAPIView):
@@ -97,18 +97,19 @@ class AccountActivation(generics.GenericAPIView):
                 acc_filter = User.objects.filter(
                     id=user_id, string_activation=uuid).exists()
 
+                print(acc_filter,acc.is_active )
                 if acc_filter and acc.is_active == False:
                     acc.is_active = True
                     acc.save()
                 elif acc_filter and acc.is_active == True:
-                    raise failure_response_validation('Link Expired', status.HTTP_400_BAD_REQUEST)
+                    raise failure_response_validation('Link Expired, you cannot access this link anymore', status.HTTP_400_BAD_REQUEST)
+                                                      
                 else:
                     pass
 
                 return success_response('User activated successfully')
 
             except User.DoesNotExist:
-    
                 raise failure_response_validation('User not found', status.HTTP_404_NOT_FOUND)
 
 class ResendEmailActivation(generics.UpdateAPIView):
@@ -119,9 +120,9 @@ class ResendEmailActivation(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
 
-        user_id = kwargs.get('user_id')
-        current_user = User.objects.get(id=user_id)
-        email = current_user.email
+        email = request.data['email']
+        current_user = User.objects.get(email=email)
+        user_id = current_user.id   
         first_name = current_user.first_name
         last_name = current_user.last_name
         uuid = self.uuid

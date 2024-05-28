@@ -150,6 +150,10 @@ CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = ["*"]
 
+CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:3000',  # Replace with the origin of your Next.js app
+]
 
 # TEMPLATE, MEDIA AND STATIC
 STATIC_URL = '/static/'

@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.db.models import Q
 from django.utils import timezone
 from django.core.handlers.wsgi import WSGIRequest
+from apps.content_hub.admin import ArticleAdmin, NoticeAdmin
+from apps.content_hub.models import Article, Notice
 from apps.pkm.form import PeriodForm
 from admincharts.admin import AdminChartMixin
 
@@ -132,3 +134,8 @@ admin_site.register(StageAssesment2, StageAssesment2Admin)
 admin_site.register(KeyStageAssesment2, KeyStageAssesment2Admin)
 admin_site.register(PKMIdeaContribute, PKMIdeaContributeAdmin)
 admin_site.register(PKMActivitySchedule, PKMActivity)
+
+admin_site.register(Notice, NoticeAdmin)
+admin_site.register(Article, ArticleAdmin)
+
+

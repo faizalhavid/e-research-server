@@ -64,7 +64,7 @@ urlpatterns = [
         path('change-password/<int:pk>', ChangePassword.as_view(), name='change-password'),
         path('refresh-token', RefreshTokenView.as_view(), name='refresh-token'),
         re_path(r'^activation/(?P<id>.+)/(?P<string_activation>.+)$', AccountActivation.as_view(), name='activation'),
-        path('resend-activation/<int:user_id>', ResendEmailActivation.as_view(), name='resend-activation'),
+        path('resend-activation', ResendEmailActivation.as_view(), name='resend-activation'),
         path('user-profile', UserProfileView.as_view(), name='user-profile'),
     ])), 
 

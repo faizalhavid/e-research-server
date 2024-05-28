@@ -291,6 +291,11 @@ class ResendEmailSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'email')
 
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("No user with this email address exists.")
+        return value
+
 
 class ChangePasswordSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
