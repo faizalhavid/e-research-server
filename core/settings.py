@@ -220,6 +220,17 @@ SIMPLE_JWT = {
 SESSION_COOKIE_AGES = 60 * 60 * 24 * 7 # 7 days
 
 
+# CHANNELS
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#         'CONFIG': {
+#             "hosts": [('127.0.0.1', 6379)],
+#         },
+#     },
+# }
+
+
 # OTHER SETTINGS
 ASGI_APPLICATION = 'core.asgi.application'
 X_FRAME_OPTIONS = 'SAMEORIGIN'

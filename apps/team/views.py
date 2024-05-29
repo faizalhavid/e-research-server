@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions, filters, generics
 from apps.account.models import Student
 from apps.team.models import Team, TeamApply, TeamTask, TeamVacancies
 from apps.team.serializers import TeamApplySerializer, TeamSerializer, TeamTaskSerializer, TeamVacanciesSerializer
@@ -13,7 +13,7 @@ class TeamViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticated, IsStudent)
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'description']
-    lookup_field = 'slug'
+    
 
     def get_queryset(self):
         user = self.request.user
@@ -43,7 +43,8 @@ class TeamViewSet(viewsets.ModelViewSet):
 class TeamVacanciesViewSet(viewsets.ModelViewSet):
     queryset = TeamVacancies.objects.all()
     serializer_class = TeamVacanciesSerializer
-    permission_classes = (permissions.IsAuthenticated, IsLeaderOrMembers)
+    # permission_classes = (permissions.IsAuthenticated, IsLeaderOrMembers)
+    permission_classes = (permissions.IsAuthenticated, )
     filter_backends = [filters.SearchFilter]
     search_fields = ['description', 'role']
     lookup_field = 'team_id'
@@ -90,6 +91,15 @@ class TeamTaskViewSet(viewsets.ModelViewSet):
         return TeamTask.objects.filter(team=team).filter(Q(team__leader=student) | Q(team__members=student))
     
 
-
-
     
+class UserTeamTaskList(generics.ListAPIView):
+    serializer_class = TeamTaskSerializer
+    ordering = ['due_time']
+    permission_classes = (permissions.IsAuthenticated, IsStudent)
+
+
+    def get_queryset(self):
+        user = self.request.user
+        student = Student.objects.filter(user=user).first()
+
+        return TeamTask.objects.filter(Q(team__leader=student) | Q(team__members=student))

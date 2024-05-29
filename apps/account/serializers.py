@@ -69,6 +69,11 @@ class StudentSerializer(serializers.ModelSerializer):
         model = Student
         fields = '__all__'
 
+class GuestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Guest
+        fields = '__all__'
+
 class AccountSerializer(serializers.ModelSerializer):
     USER_TYPE_CHOICES = (
         ('student', 'student'),
@@ -95,11 +100,11 @@ class AccountSerializer(serializers.ModelSerializer):
     
 class UserProfileSerializer(serializers.ModelSerializer):
     student = StudentSerializer(required=False)
-    lecturer = LecturerSerializer(required=False)
+    guest = GuestSerializer(required=False)
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'is_active', 'student', 'lecturer')
+        fields = ('id', 'email', 'first_name', 'last_name', 'is_active', 'student', 'guest')
         read_only_fields = ('email', 'is_active')
 
     def validate(self, attrs):
@@ -109,15 +114,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         student_data = validated_data.pop('student', None)
-        lecturer_data = validated_data.pop('lecturer', None)
+        guest_data = validated_data.pop('guest', None)
 
         instance = super().update(instance, validated_data)
 
         if student_data and instance.groups.filter(name='Student').exists():
             Student.objects.filter(user=instance).update(**student_data)
-        elif lecturer_data and instance.groups.filter(name='Lecturer').exists():
-            Lecturer.objects.filter(user=instance).update(**lecturer_data)
-
+        elif guest_data and instance.groups.filter(name='Guest').exists():
+            Guest.objects.filter(user=instance).update(**guest_data)
         return instance
 
     def to_representation(self, instance):
@@ -125,9 +129,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if instance.groups.filter(name='Student').exists() and Student.objects.filter(user=instance).exists():
             student = Student.objects.get(user=instance)
             user_representation['student'] = StudentSerializer(student).data
-        elif instance.groups.filter(name='Lecturer').exists() and Lecturer.objects.filter(user=instance).exists():
-            lecturer = Lecturer.objects.get(user=instance)
-            user_representation['lecturer'] = LecturerSerializer(lecturer).data
+        elif instance.groups.filter(name='Guest').exists() and Guest.objects.filter(user=instance).exists():
+            guest = Guest.objects.get(user=instance)
+            user_representation['guest'] = GuestSerializer(guest).data
         return user_representation
     
 
@@ -164,9 +168,12 @@ class LoginSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         user_representation = UserSerializer(instance).data
         # return student data if user is student
-        # if instance.groups.filter(name='Student').exists() and Student.objects.filter(user=instance).exists():
-        #     student = Student.objects.get(user=instance)
-        #     user_representation['student'] = StudentSerializer(student).data
+        if instance.groups.filter(name='Student').exists() and Student.objects.filter(user=instance).exists():
+            student = Student.objects.get(user=instance)
+            user_representation['student'] = StudentSerializer(student).data
+        if instance.groups.filter(name='Guest').exists() and Guest.objects.filter(user=instance).exists():
+            guest = Guest.objects.get(user=instance)
+            user_representation['guest'] = GuestSerializer(guest).data
 
         return user_representation
     
@@ -236,14 +243,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-    
+        agency=validated_data.get('agency', None),  
         user = User(
             email=validated_data['email'],
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
-            
-            agency=validated_data.get('agency', None),  
-        
         )
         user.is_active = False
         user.set_password(validated_data['password'])
@@ -261,17 +265,20 @@ class RegisterSerializer(serializers.ModelSerializer):
             else:
                 return failure_response_validation('Your data as Student is not found', 'validation')
 
-        elif validated_data['user_type'] == 'lecturer':
-            nidn = validated_data['nidn']
-            user_group = Group.objects.get(name='Lecturer')
-            user.groups.add(user_group)
-            existing_lecturer = Lecturer.objects.filter(nidn=nidn).first()
-            if existing_lecturer:
-                existing_lecturer.user = user
-                existing_lecturer.save()
-            else:
-                return failure_response_validation('Your data as Lecturer is not found', 'validation')
-
+        # elif validated_data['user_type'] == 'lecturer':
+        #     nidn = validated_data['nidn']
+        #     user_group = Group.objects.get(name='Lecturer')
+        #     user.groups.add(user_group)
+        #     existing_lecturer = Lecturer.objects.filter(nidn=nidn).first()
+        #     if existing_lecturer:
+        #         existing_lecturer.user = user
+        #         existing_lecturer.save()
+        #     else:
+        #         return failure_response_validation('Your data as Lecturer is not found', 'validation')
+        elif validated_data['user_type'] == 'guest':
+            user_group = Group.objects.get(name='Guest')
+            Guest.objects.create(user=user, agency=agency)
+        
         user.groups.add(user_group)
         return user
     

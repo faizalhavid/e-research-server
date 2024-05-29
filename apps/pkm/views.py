@@ -1,4 +1,4 @@
-from rest_framework import generics, permissions, viewsets, mixins, filters
+from rest_framework import permissions, viewsets,filters,views
 
 from apps.pkm.filter import PKMActivityScheduleFilter
 from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMScheme
@@ -6,6 +6,7 @@ from apps.pkm.serializers import PKMActivityScheduleSerializer, PKMIdeaContribut
 from django_filters.rest_framework import DjangoFilterBackend
 
 from utils.drf_http_permission import ReadOnlyModelViewSet
+from utils.exceptions import success_response
 
 
 class PKMSchemeList(ReadOnlyModelViewSet):
@@ -45,3 +46,33 @@ class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return PKMIdeaContribute.objects.filter(status='published')
     
+
+class IdeaContributeReportView(views.APIView):
+    def get(self, request):
+        user = request.user
+
+        user_contributions = PKMIdeaContribute.objects.filter(user=user)
+
+        total_contributions = user_contributions.count()
+        published_contributions = user_contributions.filter(status='P').count()
+        contributions_with_team = user_contributions.filter(team__isnull=False).count()
+
+        tags = []
+        for contribution in user_contributions:
+            for tag in contribution.tags.all():
+                if tag.name not in tags:
+                    tags.append(tag.name)
+
+        tags = ', '.join(tags)
+
+
+        return success_response(
+            message="Idea Contribute Report",
+            data={
+                'total_contributions': total_contributions,
+                'published_contributions': published_contributions,
+                'contributions_with_team': contributions_with_team,
+                'tags': tags
+            },
+            status_code=200
+        )

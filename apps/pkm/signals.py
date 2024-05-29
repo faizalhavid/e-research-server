@@ -13,16 +13,15 @@ from utils.send_notification import BaseNotification
 def pkm_idea_contribute_notification(sender, instance, created, **kwargs):
     
     status_messages = {
-        PKMIdeaContribute.STATUS[0][0]: f"PKM Idea Contribute {instance.title} has been submitted",
-        PKMIdeaContribute.STATUS[1][0]: f"PKM Idea Contribute {instance.title} has been published",
-        PKMIdeaContribute.STATUS[2][0]: f"PKM Idea Contribute {instance.title} has been accepted",
-        PKMIdeaContribute.STATUS[4][0]: f"PKM Idea Contribute {instance.title} has been rejected",
+        PKMIdeaContribute.STATUS_CHOICES[0][0]: f"PKM Idea Contribute {instance.title} has been submitted",
+        PKMIdeaContribute.STATUS_CHOICES[1][0]: f"PKM Idea Contribute {instance.title} has been published",
+        PKMIdeaContribute.STATUS_CHOICES[3][0]: f"PKM Idea Contribute {instance.title} has been rejected",
     }
 
     user = instance.user
     message = status_messages[instance.status]
 
-    BaseNotification(user, message).send_notification()
+    # BaseNotification(user, message).send_notification()
     Notification.objects.create(user=user, message=message)
 
 
@@ -44,7 +43,7 @@ def pkm_activity_schedule_notification():
                 message = f"Activity Schedule {schedule.title} is starting in {days} days!"
             program = schedule.program
 
-            BaseNotification(program, message).send_notification()
+            # BaseNotification(program, message).send_notification()
             Notification.objects.create(user=program.user, message=message)
 
 # signal pkm is ending : STUDENT
@@ -65,7 +64,7 @@ def pkm_ending_notification():
             else:
                 message = f"PKM Program {program.name} is ending in {days} days!"
 
-            BaseNotification(program, message).send_notification()
+            # BaseNotification(program, message).send_notification()
             Notification.objects.create(user=program.user, message=message)
 
 @shared_task

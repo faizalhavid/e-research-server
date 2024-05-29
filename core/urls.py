@@ -8,9 +8,9 @@ from django.conf.urls.static import static
 from apps.account.views import *
 from apps.content_hub.views import ArticleViewSet, NoticeViewSet
 from apps.notification.views import NotificationViewSet
-from apps.pkm.views import PKMActivityScheduleViewSet, PKMIdeaContributeViewSet, PKMSchemeList
+from apps.pkm.views import IdeaContributeReportView, PKMActivityScheduleViewSet, PKMIdeaContributeViewSet, PKMSchemeList
 from apps.proposals.views import ProposalViewSet, SubmissionProposalApplyViewSet, TagListView
-from apps.team.views import TeamApplyViewSet, TeamTaskViewSet, TeamVacanciesViewSet, TeamViewSet
+from apps.team.views import TeamApplyViewSet, TeamTaskViewSet, TeamVacanciesViewSet, TeamViewSet, UserTeamTaskList
 from core.admin import admin_site
 
 
@@ -35,10 +35,10 @@ router.register(r'pkm/activity-schedule', PKMActivityScheduleViewSet, basename='
 router.register(r'proposals/(?P<team_id>\d+)', ProposalViewSet, basename='proposals')
 router.register(r'proposals/submission-apply/(?P<team_id>\d+)', SubmissionProposalApplyViewSet, basename='submission-apply')
 
-router.register(r'team', TeamViewSet, basename='team')
 router.register(r'team/vacancies', TeamVacanciesViewSet, basename='team-vacancies')
 router.register(r'team/vacancies/applications', TeamApplyViewSet, basename='team-applications')
 router.register(r'team/tasks', TeamTaskViewSet, basename='teamtasks')
+
 
 router.register(r'content-hub/notice', NoticeViewSet, basename='notice')
 router.register(r'content-hub/article', ArticleViewSet, basename='article')
@@ -68,12 +68,16 @@ urlpatterns = [
         path('user-profile', UserProfileView.as_view(), name='user-profile'),
     ])), 
 
-    path('proposals/tag', TagListView.as_view(), name='proposal-tag'),   
+        path('proposals/tag', TagListView.as_view(), name='proposal-tag'),   
+        path('pkm/idea-contribute-report' ,  IdeaContributeReportView.as_view(), name='idea-contribute-report'),
+
+        path('team/user-team-task',UserTeamTaskList.as_view(), name='user-team-task-list'),
+
 
     ])),
 
 ]
-
+router.register(r'team', TeamViewSet, basename='team')
 
 
 

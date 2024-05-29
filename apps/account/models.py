@@ -47,7 +47,6 @@ class User(AbstractUser):
     username = models.CharField(max_length=50, unique=False, blank=True)
     string_activation = models.CharField(max_length=100, blank=True, default='')
     last_activity = models.DateTimeField(null=True, blank=True)
-    agency = models.CharField(max_length=100, blank=True, null=True, default='')
     USERNAME_FIELD = 'email'
     
     REQUIRED_FIELDS = []
@@ -141,6 +140,17 @@ class Lecturer(UserProfile):
             
     def __str__(self):
         return self.full_name
+        
+class Guest(UserProfile):
+    agency = models.CharField(max_length=100, blank=True, null=True, default='')
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        guest_group, created = Group.objects.get_or_create(name='Guest')
+        self.user.groups.add(guest_group)
+
+    def __str__(self):
+        return self.full_name
+
 
 
 

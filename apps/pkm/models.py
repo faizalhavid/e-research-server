@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-import slugify
+from django.utils.text import slugify
 from taggit.managers import TaggableManager
 
 class PKMProgram(models.Model):
@@ -46,6 +46,7 @@ class PKMScheme(models.Model):
         return self.name
     
 class PKMIdeaContribute(models.Model):
+    user = models.OneToOneField('account.User', on_delete=models.CASCADE, related_name='idea_contribute')
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True, default='')
     attachment = models.FileField(upload_to='pkm/idea_contribute/', blank=True, null=True)
@@ -53,7 +54,7 @@ class PKMIdeaContribute(models.Model):
     problem = models.TextField(blank=True, default='')
     solution = models.TextField(blank=True, default='')
     tags = TaggableManager()
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(unique=True, blank=True, null=True)
     image = models.ImageField(upload_to='pkm/idea_contribute/', blank=True, null=True)
     document = models.FileField(upload_to='pkm/idea_contribute/', blank=True, null=True)
     STATUS_CHOICES = (
@@ -64,6 +65,7 @@ class PKMIdeaContribute(models.Model):
     )
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='D')
     applied_date = models.DateTimeField(blank=True, null=True)
+    team = models.OneToOneField('team.Team', on_delete=models.CASCADE, related_name='idea_contribute', blank=True, null=True)
     
     class Meta:
         verbose_name = 'Idea Contribute'

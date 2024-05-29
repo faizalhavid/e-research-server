@@ -95,6 +95,22 @@ class StudentModelResource(resources.ModelResource):
         department = Departement.objects.get(name=department_name)  # Assuming 'name' is a unique field in the Department model
         row['department'] = department.id
         return row
+
+@admin.register(Guest)
+class GuestAdmin(admin.ModelAdmin):
+    list_display = ('full_name', 'agency')
+    search_fields = ('full_name', 'agency')
+    list_per_page = 15
+    ordering = ('full_name',)
+    readonly_fields = ('guest_image',)
+
+
+
+    def guest_image(self, obj):
+        if obj.image and hasattr(obj.image, 'url'):
+            return format_html('<img src="{}" width="80" height="80" />'.format(obj.image.url))
+        else:
+            return format_html('<div style="width:80px;height:80px;background-color:#f0f0f0;color:#999999;font-size:12px;text-align:center;line-height:80px;">No Image</div>')
     
 @admin.register(Student)
 class StudentAdmin(ImportExportModelAdmin,admin.ModelAdmin):
