@@ -48,7 +48,9 @@ router.register(r'notifications', NotificationViewSet, basename='notifications')
 router.register(r'accounts/student', StudentViewSet, basename='student')
 router.register(r'accounts/lecturer', LecturerViewSet, basename='lecturer')
 
-
+router.register(r'accounts/user/update-photo-profile', UpdateUserPhoto)
+router.register(r'accounts/user/update-profile', UpdateUserProfile)
+router.register(r'accounts/user/user-profile', UserProfileViewset, basename='user-profile')
 
 urlpatterns = [
     path('admin/', admin_site.urls),
@@ -65,9 +67,9 @@ urlpatterns = [
         path('refresh-token', RefreshTokenView.as_view(), name='refresh-token'),
         re_path(r'^activation/(?P<id>.+)/(?P<string_activation>.+)$', AccountActivation.as_view(), name='activation'),
         path('resend-activation', ResendEmailActivation.as_view(), name='resend-activation'),
-        path('user-profile', UserProfileView.as_view(), name='user-profile'),
     ])), 
 
+        
         path('proposals/tag', TagListView.as_view(), name='proposal-tag'),   
         path('pkm/idea-contribute-report' ,  IdeaContributeReportView.as_view(), name='idea-contribute-report'),
 

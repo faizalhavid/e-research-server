@@ -1,7 +1,7 @@
 import random
 import uuid
 from django.core.mail import send_mail
-from rest_framework import generics, status ,permissions, filters
+from rest_framework import generics, status ,permissions, filters,mixins
 from rest_framework.response import Response
 from django.conf import settings
 from django.template.loader import get_template
@@ -11,6 +11,7 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from apps.account.filter import LecturerFilter, StudentFilter
 from apps.account.serializers import *
+
 from utils.exceptions import failure_response, success_response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
@@ -202,24 +203,21 @@ class ResetPassword(generics.UpdateAPIView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = ResetPasswordSerializer
  
-class UserProfileView(generics.RetrieveUpdateAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+class UserProfileViewset(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
     serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = UserProfile.objects.all()
+    lookup_field = 'user_id'
 
-    def get_object(self):
-        return self.request.user
-
-    def get(self, request, *args, **kwargs):
-        user = self.get_object()
-        return success_response('User details', UserProfileSerializer(user, context=self.get_serializer_context()).data)
-
-    def put(self, request, *args, **kwargs):
-        user = self.get_object()
-        serializer = self.serializer_class(user, data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return success_response('User details updated successfully', UserProfileSerializer(user, context=self.get_serializer_context()).data)
+    def retrieve(self, request, *args, **kwargs):
+        user_id = self.kwargs.get(self.lookup_field)
+        user = get_object_or_404(User, pk=user_id)
+        user_profile = UserProfile.objects.filter(user=user).last()
+        if not user_profile:
+            return success_response('User profile retrieved successfully', {})
+        return success_response('User profile retrieved successfully', UserProfileSerializer(user_profile, context=self.get_serializer_context()).data)
     
+
 class RefreshTokenView(generics.CreateAPIView):
 
     permission_classes = [permissions.AllowAny]
@@ -242,8 +240,53 @@ class RefreshTokenView(generics.CreateAPIView):
 #         response.delete_cookie('refresh')
 #         response.delete_cookie('access')
 #         return response
+class UpdateUserProfile(viewsets.GenericViewSet, mixins.UpdateModelMixin):
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = UserProfile.objects.all()
+    lookup_field = 'user_id'
 
+    def update(self, request, *args, **kwargs):
+        user_id = self.kwargs.get(self.lookup_field)
+        user = get_object_or_404(User, pk=user_id)
+        serializer = self.get_serializer(data=request.data, partial=True)  # Set partial=True to allow partial updates
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+        user_profile = UserProfile.objects.filter(user=user).last()
+    
+        if not user_profile:
+            user_profile = UserProfile.objects.create(user=user, **validated_data)
+        else:
+            for attr, value in validated_data.items():
+                setattr(user_profile, attr, value)
+            user_profile.save()
+    
+        return success_response('User profile updated successfully', UserProfileSerializer(user_profile, context=self.get_serializer_context()).data)
 
+class UpdateUserPhoto(viewsets.GenericViewSet, mixins.UpdateModelMixin):
+    serializer_class = UpdateUserPhotoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = UserProfile.objects.all()
+    lookup_field = 'user_id'
+    
+    def update(self, request, *args, **kwargs):
+        user_id = self.kwargs.get(self.lookup_field)
+        user = get_object_or_404(User, pk=user_id)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+        user_profile = UserProfile.objects.filter(user=user).last()
+        if not user_profile:
+            user_profile = UserProfile.objects.create(
+                user=user,
+                image=validated_data.get('image', None),
+            )
+        else:
+            user_profile.user = user
+            user_profile.image = validated_data.get('image', None)
+            user_profile.save()
+        return Response({'message': "Photo Profile changed successfully"}, status=status.HTTP_200_OK)
+    
 
 
 

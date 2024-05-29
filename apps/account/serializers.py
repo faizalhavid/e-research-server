@@ -107,30 +107,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ('id', 'email', 'first_name', 'last_name', 'is_active', 'student', 'guest')
         read_only_fields = ('email', 'is_active')
 
-    def validate(self, attrs):
-        if 'email' in attrs:
-            raise failure_response_validation('You cannot change your email', 'validation')
-        return attrs
-
-    def update(self, instance, validated_data):
-        student_data = validated_data.pop('student', None)
-        guest_data = validated_data.pop('guest', None)
-
-        instance = super().update(instance, validated_data)
-
-        if student_data and instance.groups.filter(name='Student').exists():
-            Student.objects.filter(user=instance).update(**student_data)
-        elif guest_data and instance.groups.filter(name='Guest').exists():
-            Guest.objects.filter(user=instance).update(**guest_data)
-        return instance
 
     def to_representation(self, instance):
         user_representation = super().to_representation(instance)
-        if instance.groups.filter(name='Student').exists() and Student.objects.filter(user=instance).exists():
-            student = Student.objects.get(user=instance)
+        user = instance.user  # Access the User model
+        if user.groups.filter(name='Student').exists() and Student.objects.filter(user=user).exists():
+            student = Student.objects.get(user=user)
             user_representation['student'] = StudentSerializer(student).data
-        elif instance.groups.filter(name='Guest').exists() and Guest.objects.filter(user=instance).exists():
-            guest = Guest.objects.get(user=instance)
+        elif user.groups.filter(name='Guest').exists() and Guest.objects.filter(user=user).exists():
+            guest = Guest.objects.get(user=user)
             user_representation['guest'] = GuestSerializer(guest).data
         return user_representation
     
@@ -407,6 +392,15 @@ class ForgetPasswordMail(serializers.ModelSerializer):
         if not user:
             raise failure_response_validation('Your account does not exist', 'validation')
         return attrs
+    
+
+class UpdateUserPhotoSerializer(serializers.ModelSerializer):
+     image = serializers.ImageField(
+        max_length=None
+        , use_url=True, allow_null=True, required=False)
+     class Meta:
+        model = UserProfile
+        fields = ['image']
 
 class ActivationSerialier(serializers.Serializer):
     pass
