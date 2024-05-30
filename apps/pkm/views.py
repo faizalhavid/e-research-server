@@ -36,17 +36,16 @@ class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
 
 
 class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
-    queryset = PKMIdeaContribute.objects.all()
+    # queryset = PKMIdeaContribute.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PKMIdeaContributeSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ['title', 'tags__name', 'description']
     ordering_fields = ['created']
-
+    lookup_field = 'slug'
     def get_queryset(self):
-        return PKMIdeaContribute.objects.filter(status='published')
+        return PKMIdeaContribute.objects.filter(status='P')
     
-
 class IdeaContributeReportView(views.APIView):
     def get(self, request):
         user = request.user

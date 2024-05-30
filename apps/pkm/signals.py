@@ -22,9 +22,8 @@ def pkm_idea_contribute_notification(sender, instance, created, **kwargs):
     message = status_messages[instance.status]
 
     # BaseNotification(user, message).send_notification()
-    Notification.objects.create(user=user, message=message)
-
-
+    notification, created = Notification.objects.update_or_create(
+        user=user, defaults={'message': message})
 @shared_task
 def pkm_activity_schedule_notification():
     from apps.pkm.models import PKMActivitySchedule

@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 from taggit.managers import TaggableManager
+from django.contrib.postgres.fields import ArrayField
 
 class PKMProgram(models.Model):
     name = models.CharField(max_length=50, blank=True)
@@ -46,15 +47,14 @@ class PKMScheme(models.Model):
         return self.name
     
 class PKMIdeaContribute(models.Model):
-    user = models.OneToOneField('account.User', on_delete=models.CASCADE, related_name='idea_contribute')
+    user = models.ForeignKey('account.User', on_delete=models.CASCADE, related_name='idea_contributes')
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True, default='')
-    attachment = models.FileField(upload_to='pkm/idea_contribute/', blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
-    problem = models.TextField(blank=True, default='')
-    solution = models.TextField(blank=True, default='')
+    problem = ArrayField(models.CharField(max_length=200), blank=True, default=list)
+    solution = ArrayField(models.CharField(max_length=200), blank=True, default=list)
     tags = TaggableManager()
-    slug = models.SlugField(unique=True, blank=True, null=True)
+    slug = models.SlugField(unique=True, blank=True, null=True, max_length=255)
     image = models.ImageField(upload_to='pkm/idea_contribute/', blank=True, null=True)
     document = models.FileField(upload_to='pkm/idea_contribute/', blank=True, null=True)
     STATUS_CHOICES = (
@@ -76,4 +76,6 @@ class PKMIdeaContribute(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.title)
+        if self.status == 'P' and not self.applied_date:
+            self.applied_date = timezone.now()
         super().save(*args, **kwargs)
