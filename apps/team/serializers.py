@@ -56,13 +56,10 @@ class TeamSerializer(serializers.ModelSerializer):
 
 
 class TeamVacanciesSerializer(serializers.ModelSerializer):
+    team = TeamSerializer(read_only=True)
     class Meta:
         model = TeamVacancies
         fields = '__all__'
-        read_only_fields = ('id', 'team', 'created_at', 'closed_at')
-        extra_kwargs = {
-            'description': {'write_only': True},
-        }
         
     def validate(self, data):
         team = self.context['team']

@@ -1,6 +1,7 @@
+import hashlib
 from django.db import models
 from django.core.exceptions import ValidationError
-
+from django.contrib.postgres.fields import ArrayField
 from apps.account.models import Student
 
 def team_directory_path(instance, filename):
@@ -31,13 +32,19 @@ class Team(models.Model):
 class TeamVacancies(models.Model):
     team = models.ForeignKey(Team, related_name='vacancies', on_delete=models.CASCADE)
     description = models.TextField()
+    requirements = ArrayField(models.CharField(max_length=200), blank=True, default=list)
     role = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
     closed_at = models.DateTimeField()
-    
+    slug = models.SlugField(unique=True, blank=True, null=True)
     
     def __str__(self):
-        return self.team.name + ' - ' + self.name
+        return self.team.name + ' - ' + self.role
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = hashlib.sha256((self.role + self.team.name).encode()).hexdigest()[:15]
+        super().save(*args, **kwargs)
 
     
 class TeamApply(models.Model):

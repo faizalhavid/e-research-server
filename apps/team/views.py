@@ -45,23 +45,12 @@ class TeamVacanciesViewSet(viewsets.ModelViewSet):
     queryset = TeamVacancies.objects.all()
     serializer_class = TeamVacanciesSerializer
     # permission_classes = (permissions.IsAuthenticated, IsLeaderOrMembers)
-    permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (permissions.IsAuthenticated, IsStudent)
     filter_backends = [filters.SearchFilter]
     search_fields = ['description', 'role']
     lookup_field = 'team_id'
 
-    def get_queryset(self):
-        user = self.request.user
-        team = self.kwargs.get('team_id')
-        if user.is_superuser:
-            return TeamVacancies.objects.all()
-
-        student = Student.objects.filter(user=user).first()
-        if not student:
-            return TeamVacancies.objects.none()
-        
-        return TeamVacancies.objects.filter(team=team).filter(Q(team__leader=student) | Q(team__members=student))
-
+ 
 class TeamApplyViewSet(viewsets.ModelViewSet):
     queryset = TeamApply.objects.all()
     serializer_class = TeamApplySerializer
