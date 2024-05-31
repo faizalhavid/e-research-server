@@ -9,7 +9,7 @@ from apps.account.views import *
 from apps.content_hub.views import ArticleViewSet, NoticeViewSet
 from apps.notification.views import NotificationViewSet
 from apps.pkm.views import IdeaContributeReportView, PKMActivityScheduleViewSet, PKMIdeaContributeApplyTeamViewSet, PKMIdeaContributeViewSet, PKMSchemeList
-from apps.proposals.views import ProposalViewSet, SubmissionProposalApplyViewSet, TagListView
+from apps.proposals.views import  SubmissionProposalApplyViewSet, SubmissionProposalViewSet, TagListView
 from apps.team.views import TeamApplyViewSet, TeamTaskViewSet, TeamVacanciesViewSet, TeamViewSet, UserTeamTaskList
 from core.admin import admin_site
 
@@ -34,13 +34,14 @@ router.register(r'pkm/idea-contribute/apply', PKMIdeaContributeApplyTeamViewSet,
 router.register(r'pkm/scheme', PKMSchemeList, basename='scheme')
 router.register(r'pkm/activity-schedule', PKMActivityScheduleViewSet, basename='activity-schedule')
 
-router.register(r'proposals/(?P<team_id>\d+)', ProposalViewSet, basename='proposals')
+# router.register(r'proposals/(?P<team_id>\d+)', ProposalViewSet, basename='proposals')
+router.register(r'proposals/submission', SubmissionProposalViewSet, basename='submission-proposal')
 router.register(r'proposals/submission-apply/(?P<team_id>\d+)', SubmissionProposalApplyViewSet, basename='submission-apply')
 
 router.register(r'team/vacancies', TeamVacanciesViewSet, basename='team-vacancies')
 router.register(r'team/vacancies/applications', TeamApplyViewSet, basename='team-applications')
-router.register(r'team/tasks', TeamTaskViewSet, basename='teamtasks')
-
+router.register(r'team/(?P<team_id>\d+)/tasks', TeamTaskViewSet, basename='unique_teamtasks')
+router.register(r'team', TeamViewSet, basename='team')
 
 router.register(r'content-hub/notice', NoticeViewSet, basename='notice')
 router.register(r'content-hub/article', ArticleViewSet, basename='article')
@@ -81,7 +82,7 @@ urlpatterns = [
     ])),
 
 ]
-router.register(r'team', TeamViewSet, basename='team')
+
 
 
 

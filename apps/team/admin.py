@@ -1,9 +1,7 @@
 from django.contrib import admin
-
-
 from apps.account.models import Student
-from apps.proposals.models import Proposal
-from apps.team.models import Team, TeamApply, TeamVacancies
+from apps.proposals.models import SubmissionsProposalApply
+from apps.team.models import Team, TeamApply, TeamTask, TeamVacancies
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
@@ -15,8 +13,8 @@ class TeamAdmin(admin.ModelAdmin):
     filter_horizontal = ('members',)
 
     def submission_information(self, obj):
-        if Proposal.objects.filter(team=obj).exists():
-            return Proposal.objects.get(team=obj).title
+        if SubmissionsProposalApply.objects.filter(team=obj).exists():
+            return SubmissionsProposalApply.objects.get(team=obj).title
         else:
             return 'No Submission Proposal'
     submission_information.short_description = 'Submission'
@@ -38,3 +36,10 @@ class TeamApplyAdmin(admin.ModelAdmin):
     def get_vacancies_role(self, obj):
         return obj.vacanicies.role
     get_vacancies_role.short_description = 'Vacancies Role'
+
+
+@admin.register(TeamTask)
+class TeamTaskAdmin(admin.ModelAdmin):
+    model = TeamTask
+    list_display = ('id', 'team', 'title', 'description')
+    search_fields = ('team__name', 'title', 'description')

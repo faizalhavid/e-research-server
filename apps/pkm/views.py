@@ -1,4 +1,4 @@
-from rest_framework import permissions, viewsets,filters,views
+from rest_framework import permissions, viewsets,filters,views,mixins
 
 from apps.pkm.filter import PKMActivityScheduleFilter
 from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMIdeaContributeApplyTeam, PKMScheme
@@ -10,14 +10,14 @@ from utils.exceptions import success_response
 from django.db.models import Q
 
 
-class PKMSchemeList(ReadOnlyModelViewSet):
+class PKMSchemeList(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin):
     queryset = PKMScheme.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PKMSchemeSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ['name', 'abbreviation', 'description']
 
-class PKMActivityScheduleViewSet(ReadOnlyModelViewSet):
+class PKMActivityScheduleViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin):
     queryset = PKMActivitySchedule.objects.all().order_by('start_date')
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PKMActivityScheduleSerializer
@@ -55,7 +55,7 @@ class IdeaContributeReportView(views.APIView):
 
         total_contributions = user_contributions.count()
         published_contributions = user_contributions.filter(status='P').count()
-        contributions_with_team = user_contributions.filter(team__isnull=False).count()
+        contributions_with_team = sum(contribution.apply_teams.exists() for contribution in user_contributions)
 
         tags = []
         for contribution in user_contributions:

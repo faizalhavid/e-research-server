@@ -3,7 +3,7 @@ from rest_framework import viewsets,mixins
 from .models import Notification
 from .serializers import NotificationSerializer
 
-class NotificationViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.ListModelMixin):
+class NotificationViewSet(viewsets.GenericViewSet,  mixins.UpdateModelMixin, mixins.ListModelMixin):
     serializer_class = NotificationSerializer
     ordering_fields = ['timestamp']
     search_fields = ['message']

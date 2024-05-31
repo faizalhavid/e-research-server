@@ -1,9 +1,10 @@
 from rest_framework import viewsets, permissions, filters, generics
 from apps.account.models import Student
+from apps.team.filters import TeamTaskFilter
 from apps.team.models import Team, TeamApply, TeamTask, TeamVacancies
 from apps.team.serializers import TeamApplySerializer, TeamSerializer, TeamTaskSerializer, TeamVacanciesSerializer
 from django.db.models import Q, Case, When, BooleanField
-
+from django_filters.rest_framework import DjangoFilterBackend
 from utils.permissions import IsLeaderOrMembers, IsStudent
 
 
@@ -71,18 +72,18 @@ class TeamApplyViewSet(viewsets.ModelViewSet):
 
 
 class TeamTaskViewSet(viewsets.ModelViewSet):
-    queryset = TeamTask.objects.all()
     serializer_class = TeamTaskSerializer
-    permission_classes = (permissions.IsAuthenticated, IsLeaderOrMembers)
-    filter_backends = [filters.SearchFilter]
+    permission_classes = (permissions.IsAuthenticated, IsStudent)
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ['title', 'description']
-    lookup_field = 'team_id'
+    lookup_field = 'pk'
+    filterset_class = TeamTaskFilter
 
     def get_queryset(self):
         user = self.request.user
         team = self.kwargs.get('team_id')
         if user.is_superuser:
-            return TeamTask.objects.all()
+            return TeamTask.objects.filter(team=team)
 
         student = Student.objects.filter(user=user).first()
         if not student:
@@ -90,7 +91,7 @@ class TeamTaskViewSet(viewsets.ModelViewSet):
         
         return TeamTask.objects.filter(team=team).filter(Q(team__leader=student) | Q(team__members=student))
     
-
+    
     
 class UserTeamTaskList(generics.ListAPIView):
     serializer_class = TeamTaskSerializer

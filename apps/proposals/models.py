@@ -1,3 +1,4 @@
+import hashlib
 from django.db import models
 from django.db import models
 from django.dispatch import receiver
@@ -5,7 +6,6 @@ from django.forms import ValidationError
 from taggit.managers import TaggableManager
 import os
 from django.db.models.signals import m2m_changed
-from django.utils import timezone
 
 from utils.exceptions import failure_response_validation
 from utils.handle_file_upload import UploadToPathAndRename
@@ -20,6 +20,7 @@ class SubmissionProposal(models.Model):
     created_at=models.DateTimeField(auto_now_add=True)
     due_time = models.DateTimeField()
     addional_file = models.FileField(upload_to=UploadToPathAndRename(os.path.join('proposals', 'submission_proposal/file')), blank=True, null=True)
+    slug = models.SlugField(unique=True, blank=True, null=True)
     STATUS = (
         ('ARCHIVED', 'Archived'),
         ('PUBLISHED', 'Published'),
@@ -32,7 +33,10 @@ class SubmissionProposal(models.Model):
     def __str__(self):
         return f"{self.title} - {self.program.name}"
     
-    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self.title.replace(' ', '-').lower()
+        super().save(*args, **kwargs)
     
 class SubmissionsProposalApply(models.Model):
     submission = models.ForeignKey('proposals.SubmissionProposal', related_name='applies', on_delete=models.CASCADE)
@@ -49,18 +53,39 @@ class SubmissionsProposalApply(models.Model):
     submitted_at = models.DateTimeField(auto_now_add=True)
     team = models.ForeignKey('team.Team', related_name='submissions_proposals_apply', on_delete=models.CASCADE)
     lecturer = models.ForeignKey('account.Lecturer', related_name='submissions_proposals_apply', on_delete=models.CASCADE, blank=True, null=True)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    tags = TaggableManager( related_name='submissions_proposals_apply')
+    proposal = models.FileField(upload_to=UploadToPathAndRename(os.path.join('proposals', 'submission_proposal/apply')))
+    slug = models.SlugField(unique=True, blank=True, null=True)
     def __str__(self):
-        proposal_title = self.team.proposals.first().title if self.team.proposals.first() else 'No proposal'
-        return f"{proposal_title} - {self.submission.title}"
+        return f"{self.team.name} - {self.submission.title}"
     
     class Meta:
-        unique_together = ('team', 'submission',)
+        unique_together = ('team', 'submission', 'title',)
         verbose_name_plural = '2. Pengumpulan Proposal'
 
     def save(self, *args, **kwargs):
         if not self.category:
             self.category = self.submission.program.scheme.first()  
+
+        if not self.slug:
+            self.slug = hashlib.sha256(self.title.encode()).hexdigest()[:15]
         super().save(*args, **kwargs)
+
+# class Proposal(models.Model):
+#     team = models.ForeignKey('team.Team', related_name='proposals', on_delete=models.CASCADE, null=True, blank=True)
+#     title = models.CharField(max_length=200)
+#     description = models.TextField()
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     file = models.FileField(upload_to=UploadToPathAndRename(os.path.join('proposals', 'proposal/file')), blank=True, null=True)
+#     tag = TaggableManager(blank=True, related_name='proposals')
+#     class Meta:
+#         verbose_name_plural = '5. Proposal Mahasiswa'
+
+#     def __str__(self):
+#         return f"{self.title} - {self.team.name}"
+    
 
 
 class KeyStageAssesment2(models.Model):
@@ -174,19 +199,7 @@ class StageAssesment2(models.Model):
 
 
 
-class Proposal(models.Model):
-    team = models.ForeignKey('team.Team', related_name='proposals', on_delete=models.CASCADE, null=True, blank=True)
-    title = models.CharField(max_length=200)
-    description = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    file = models.FileField(upload_to=UploadToPathAndRename(os.path.join('proposals', 'proposal/file')), blank=True, null=True)
-    tag = TaggableManager(blank=True, related_name='proposals')
-    class Meta:
-        verbose_name_plural = '5. Proposal Mahasiswa'
 
-    def __str__(self):
-        return f"{self.title} - {self.team.name}"
-    
 
 
 @receiver(m2m_changed, sender=LecturerTeamSubmissionApply.submission_apply.through)

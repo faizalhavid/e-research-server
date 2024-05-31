@@ -36,7 +36,7 @@ def send_upcoming_deadline_notifications():
             leader = task.team.leader
             members = task.team.members.all()
 
-            BaseNotification(leader, message).send_notification()
+            #BaseNotification(leader, message).send_notification()
             Notification.objects.create(user=leader.user, message=message)
             if members:
                 for member in members:

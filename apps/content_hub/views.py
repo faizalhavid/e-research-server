@@ -8,7 +8,7 @@ from django.db.models import Case, When, Value, IntegerField
 
 
 
-class NoticeViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
+class NoticeViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
     queryset = Notice.objects.annotate(
     priority_order=Case(
         When(priority='high', then=Value(1)),
@@ -25,7 +25,7 @@ class NoticeViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
     lookup_field = 'slug'
 
 
-class ArticleViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
+class ArticleViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = (permissions.AllowAny, )

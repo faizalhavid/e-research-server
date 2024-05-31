@@ -17,7 +17,6 @@ class Team(models.Model):
     STATUS_CHOICES = (
         ('ACTIVE', 'Active'),
         ('NOT_ACTIVE', 'Not Active'),
-        ('COMPLETED', 'Completed'),
     )
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ACTIVE')
     created_at = models.DateTimeField(auto_now_add=True)
