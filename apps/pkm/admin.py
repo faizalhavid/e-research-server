@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMProgram, PKMScheme
+from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMIdeaContributeApplyTeam, PKMProgram, PKMScheme
 from apps.proposals.models import SubmissionProposal
 from django import forms
 
@@ -42,3 +42,8 @@ class PKMIdeaContributeAdmin(admin.ModelAdmin):
         form.base_fields['problem'].help_text = 'Enter problems as a comma-separated list, example: Problem 1, Problem 2'
         form.base_fields['solution'].help_text = 'Enter solutions as a comma-separated list, example: Solution 1, Solution 2'
         return form
+    
+@admin.register(PKMIdeaContributeApplyTeam)
+class PKMIdeaContributeApplyTeamAdmin(admin.ModelAdmin):
+    list_display = ['team', 'idea_contribute', 'status']
+    search_fields = ['team__name', 'idea_contribute__title', 'status']

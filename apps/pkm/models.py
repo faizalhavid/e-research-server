@@ -65,7 +65,6 @@ class PKMIdeaContribute(models.Model):
     )
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='D')
     applied_date = models.DateTimeField(blank=True, null=True)
-    team = models.OneToOneField('team.Team', on_delete=models.CASCADE, related_name='idea_contribute', blank=True, null=True)
     
     class Meta:
         verbose_name = 'Idea Contribute'
@@ -79,3 +78,25 @@ class PKMIdeaContribute(models.Model):
         if self.status == 'P' and not self.applied_date:
             self.applied_date = timezone.now()
         super().save(*args, **kwargs)
+
+
+
+class PKMIdeaContributeApplyTeam(models.Model):
+    idea_contribute = models.ForeignKey('pkm.PKMIdeaContribute', on_delete=models.CASCADE, related_name='apply_teams')
+    team = models.ForeignKey('team.Team', on_delete=models.CASCADE, related_name='apply_ideas')
+    created = models.DateTimeField(auto_now_add=True)
+    STATUS_CHOICES = (
+        ('P', 'Pending'),
+        ('A', 'Accepted'),
+        ('R', 'Rejected'),
+    )
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='P')
+    
+    class Meta:
+        verbose_name = 'Apply Team Idea Contribute'
+        verbose_name_plural = 'Apply Team Idea Contribute'
+    def __str__(self):
+        return f"{self.team.name} - {self.idea_contribute.title}"
+    
+    
+    

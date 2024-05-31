@@ -1,6 +1,6 @@
 from apps.account.models import Guest, Lecturer, Student
 from apps.account.serializers import UserSerializer
-from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMScheme
+from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMIdeaContributeApplyTeam, PKMScheme
 from rest_framework import serializers
 from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
@@ -41,3 +41,9 @@ class PKMIdeaContributeSerializer(TaggitSerializer,serializers.ModelSerializer):
     
         return representation
 
+
+
+class PKMIdeaContributeApplyTeamSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PKMIdeaContributeApplyTeam
+        fields = '__all__'

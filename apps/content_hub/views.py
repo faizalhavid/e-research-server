@@ -1,5 +1,5 @@
 
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions, filters, mixins
 from apps.content_hub.models import Article, Comment, Notice
 from apps.content_hub.serializers import ArticleSerializer, CommentSerializer, NoticeSerializer
 from utils.drf_http_permission import ReadOnlyModelViewSet
@@ -8,7 +8,7 @@ from django.db.models import Case, When, Value, IntegerField
 
 
 
-class NoticeViewSet(ReadOnlyModelViewSet):
+class NoticeViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
     queryset = Notice.objects.annotate(
     priority_order=Case(
         When(priority='high', then=Value(1)),
@@ -25,7 +25,7 @@ class NoticeViewSet(ReadOnlyModelViewSet):
     lookup_field = 'slug'
 
 
-class ArticleViewSet(ReadOnlyModelViewSet):
+class ArticleViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = (permissions.AllowAny, )

@@ -3,7 +3,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from apps.notification.models import Notification
-from apps.pkm.models import PKMIdeaContribute
+from apps.pkm.models import PKMIdeaContribute, PKMIdeaContributeApplyTeam
 from utils.send_notification import BaseNotification
 
 
@@ -89,3 +89,31 @@ def delete_notifications_after_program_end():
             # Delete all notifications for the members of the team associated with the SubmissionProposalApply
             for member in submission_proposal.team.members.all():
                 Notification.objects.filter(user=member.user).delete()
+
+
+# signal pkm idea contribution team status : STUDENT
+
+@receiver(post_save, sender=PKMIdeaContributeApplyTeam)
+def pkm_idea_contribute_team_notification(sender, instance, created, **kwargs):
+    status_messages = {
+        PKMIdeaContributeApplyTeam.STATUS_CHOICES[0][0]: f"Your team application for Idea Contribute {instance.idea_contribute.title} has been submitted",
+        PKMIdeaContributeApplyTeam.STATUS_CHOICES[1][0]: f"Your team application for Idea Contribute {instance.idea_contribute.title} has been accepted",
+        PKMIdeaContributeApplyTeam.STATUS_CHOICES[2][0]: f"Your team application for Idea Contribute {instance.idea_contribute.title} has been rejected",
+    }
+
+    user = instance.team.leader.user
+    message = status_messages[instance.status]
+
+    # BaseNotification(user, message).send_notification()
+    notification, created = Notification.objects.update_or_create(
+        user=user, defaults={'message': message})
+
+
+# signal pkm idea contribution team to owner : OWNER
+@receiver(post_save, sender=PKMIdeaContributeApplyTeam)
+def pkm_idea_contribute_team_owner_notification(sender, instance, created, **kwargs):
+    if created:  # only for newly created instances
+        Notification.objects.create(
+            user=instance.idea_contribute.user,
+            message=f"Team {instance.team.name} has applied to your idea {instance.idea_contribute.title}."
+        )

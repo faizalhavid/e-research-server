@@ -8,7 +8,7 @@ from django.conf.urls.static import static
 from apps.account.views import *
 from apps.content_hub.views import ArticleViewSet, NoticeViewSet
 from apps.notification.views import NotificationViewSet
-from apps.pkm.views import IdeaContributeReportView, PKMActivityScheduleViewSet, PKMIdeaContributeViewSet, PKMSchemeList
+from apps.pkm.views import IdeaContributeReportView, PKMActivityScheduleViewSet, PKMIdeaContributeApplyTeamViewSet, PKMIdeaContributeViewSet, PKMSchemeList
 from apps.proposals.views import ProposalViewSet, SubmissionProposalApplyViewSet, TagListView
 from apps.team.views import TeamApplyViewSet, TeamTaskViewSet, TeamVacanciesViewSet, TeamViewSet, UserTeamTaskList
 from core.admin import admin_site
@@ -29,6 +29,8 @@ schema_view = views.get_schema_view(
 router = routers.DefaultRouter(trailing_slash=False)
 
 router.register(r'pkm/idea-contribute', PKMIdeaContributeViewSet, basename='idea-contribute')
+router.register(r'pkm/idea-contribute/apply', PKMIdeaContributeApplyTeamViewSet, basename='idea-contribute-apply')
+
 router.register(r'pkm/scheme', PKMSchemeList, basename='scheme')
 router.register(r'pkm/activity-schedule', PKMActivityScheduleViewSet, basename='activity-schedule')
 

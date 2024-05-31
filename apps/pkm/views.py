@@ -1,12 +1,13 @@
 from rest_framework import permissions, viewsets,filters,views
 
 from apps.pkm.filter import PKMActivityScheduleFilter
-from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMScheme
-from apps.pkm.serializers import PKMActivityScheduleSerializer, PKMIdeaContributeSerializer, PKMSchemeSerializer
+from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMIdeaContributeApplyTeam, PKMScheme
+from apps.pkm.serializers import PKMActivityScheduleSerializer, PKMIdeaContributeApplyTeamSerializer, PKMIdeaContributeSerializer, PKMSchemeSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 
 from utils.drf_http_permission import ReadOnlyModelViewSet
 from utils.exceptions import success_response
+from django.db.models import Q
 
 
 class PKMSchemeList(ReadOnlyModelViewSet):
@@ -75,3 +76,20 @@ class IdeaContributeReportView(views.APIView):
             },
             status_code=200
         )
+    
+
+class PKMIdeaContributeApplyTeamViewSet(viewsets.ModelViewSet):
+    serializer_class = PKMIdeaContributeApplyTeamSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['team__name', 'idea_contribute__title', 'status']
+    lookup_field = 'idea_contributed_slug'
+    authentication_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return PKMIdeaContributeApplyTeam.objects.all()
+        if PKMIdeaContributeApplyTeam.objects.filter(idea_contribute__user=user).exists():
+            return PKMIdeaContributeApplyTeam.objects.filter(idea_contribute__user=user)
+        
+        return PKMIdeaContributeApplyTeam.objects.filter(Q(team__leader=user) | Q(team__members=user))
