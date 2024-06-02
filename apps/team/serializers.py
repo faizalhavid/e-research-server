@@ -93,8 +93,19 @@ class TeamTaskSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('id', 'team', 'created_at', 'updated_at')
         
+
+    def create(self, validated_data):
+        team_id = self.context['team_id']
+        team = Team.objects.get(id=team_id)
+        task = TeamTask.objects.create(team=team, **validated_data)
+        return task
+    
+    
     def validate(self, data):
-        team = self.context['team']
+        print(self.context)
+        team_id = self.context['team_id']
+        team = Team.objects.get(id=team_id)
+        
         if team.status != 'ACTIVE':
             raise failure_response_validation('Team is not active')
         return data

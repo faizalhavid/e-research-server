@@ -1,9 +1,14 @@
-
 from django_filters import rest_framework as filters
 from django.utils import timezone
 from datetime import timedelta
-
 from apps.team.models import TeamTask
+
+class TeamTaskFilter(filters.FilterSet):
+    due_in_days = filters.NumberFilter(method='filter_by_due_date')
+
+    class Meta:
+        model = TeamTask
+        fields = ['title', 'description', 'due_time', 'completed', 'due_in_days']
 
 class TeamTaskFilter(filters.FilterSet):
     due_in_days = filters.NumberFilter(method='filter_by_due_date')
@@ -16,11 +21,14 @@ class TeamTaskFilter(filters.FilterSet):
         if value is not None:
             # Menghitung tanggal batas atas (3 hari dari sekarang)
             date_threshold = timezone.now() + timedelta(days=int(value))
-            print(date_threshold)
             # Menghitung tanggal batas bawah (sekarang)
             date_now = timezone.now()
-            # Filter dengan due_time antara sekarang dan 3 hari ke depan
-            return queryset.filter(due_time__gte=date_now, due_time__lte=date_threshold)
+            # Filter dengan due_time antara sekarang dan 3 hari ke depan dan belum completed
+            queryset = queryset.filter(
+                due_time__gte=date_now,
+                due_time__lte=date_threshold,
+                completed=False
+            ).order_by('created_at')[:5]
         return queryset
 
     def __init__(self, *args, **kwargs):

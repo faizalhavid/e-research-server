@@ -80,7 +80,10 @@ class TeamTaskViewSet(viewsets.ModelViewSet):
         
         return TeamTask.objects.filter(team=team).filter(Q(team__leader=student) | Q(team__members=student))
     
-    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['team_id'] = self.kwargs.get('team_id')
+        return context
     
 class UserTeamTaskList(generics.ListAPIView):
     serializer_class = TeamTaskSerializer
