@@ -14,7 +14,7 @@ class TeamViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticated, IsStudent)
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'description']
-    
+    lookup_field = 'slug'
 
     def get_queryset(self):
         user = self.request.user
@@ -48,7 +48,7 @@ class TeamVacanciesViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticated, IsStudent)
     filter_backends = [filters.SearchFilter]
     search_fields = ['description', 'role']
-    lookup_field = 'team_id'
+    lookup_field = 'slug'
 
  
 class TeamApplyViewSet(viewsets.ModelViewSet):

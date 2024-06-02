@@ -3,7 +3,8 @@ from rest_framework import serializers
 from apps.account.models import Lecturer, Student
 from apps.team.models import Team, TeamApply, TeamTask, TeamVacancies
 from utils.exceptions import failure_response_validation
-
+from taggit.serializers import (TagListSerializerField,
+                                TaggitSerializer)
 
 class MemberSerializers(serializers.ModelSerializer):
     class Meta:
@@ -55,7 +56,8 @@ class TeamSerializer(serializers.ModelSerializer):
     
 
 
-class TeamVacanciesSerializer(serializers.ModelSerializer):
+class TeamVacanciesSerializer(TaggitSerializer,serializers.ModelSerializer):
+    tags = TagListSerializerField()
     team = TeamSerializer(read_only=True)
     class Meta:
         model = TeamVacancies
@@ -89,6 +91,7 @@ class TeamTaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeamTask
         fields = '__all__'
+        read_only_fields = ('id', 'team', 'created_at', 'updated_at')
         
     def validate(self, data):
         team = self.context['team']

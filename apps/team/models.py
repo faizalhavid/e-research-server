@@ -2,7 +2,7 @@ import hashlib
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import ArrayField
-from apps.account.models import Student
+from taggit.managers import TaggableManager
 
 def team_directory_path(instance, filename):
     return f'team/{instance.name}/{filename}'
@@ -22,9 +22,14 @@ class Team(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ACTIVE')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    slug = models.SlugField(unique=True, blank=True, null=True)
     def __str__(self):
         return self.name 
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = hashlib.sha256(self.name.encode()).hexdigest()[:15]
+        super().save(*args, **kwargs)
     
 
 
@@ -36,6 +41,7 @@ class TeamVacancies(models.Model):
     role = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
     closed_at = models.DateTimeField()
+    tags = TaggableManager()
     slug = models.SlugField(unique=True, blank=True, null=True)
     
     def __str__(self):
