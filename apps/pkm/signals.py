@@ -3,9 +3,12 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from apps.notification.models import Notification
-from apps.pkm.models import PKMIdeaContribute, PKMIdeaContributeApplyTeam
+from apps.pkm.models import PKMIdeaContribute, PKMIdeaContributeApplyTeam, PKMProgram
+from apps.proposals.models import SubmissionsProposalApply
 from utils.send_notification import BaseNotification
 
+from datetime import timedelta
+from django.utils import timezone
 
 
 # signal pkm idea contribution : STUDENT,GUEST
@@ -24,6 +27,7 @@ def pkm_idea_contribute_notification(sender, instance, created, **kwargs):
     # BaseNotification(user, message).send_notification()
     notification, created = Notification.objects.update_or_create(
         user=user, defaults={'message': message})
+    
 @shared_task
 def pkm_activity_schedule_notification():
     from apps.pkm.models import PKMActivitySchedule
@@ -68,10 +72,7 @@ def pkm_ending_notification():
 
 @shared_task
 def delete_notifications_after_program_end():
-    from apps.pkm.models import PKMProgram, SubmissionProposalApply
-    from apps.notification.models import Notification
-    from datetime import timedelta, timezone
-
+  
     # Get programs that ended the day before yesterday
     ended_programs = PKMProgram.objects.filter(
         end_date__lt=timezone.now() - timedelta(days=1),
@@ -80,7 +81,7 @@ def delete_notifications_after_program_end():
 
     for program in ended_programs:
         # Get the SubmissionProposalApply instances related to the program
-        submission_proposals = SubmissionProposalApply.objects.filter(submission_proposal=program.submission_proposal)
+        submission_proposals = SubmissionsProposalApply.objects.filter(submission_proposal=program.submission_proposal)
 
         for submission_proposal in submission_proposals:
             # Delete all notifications for the leader of the team associated with the SubmissionProposalApply
@@ -101,13 +102,27 @@ def pkm_idea_contribute_team_notification(sender, instance, created, **kwargs):
         PKMIdeaContributeApplyTeam.STATUS_CHOICES[2][0]: f"Your team application for Idea Contribute {instance.idea_contribute.title} has been rejected",
     }
 
+    # Get the current time
+    now = timezone.now()
+
+    # If this is the first application for this idea contribute and it's been more than 3 days since it was created
+    if instance.created < now - timezone.timedelta(days=3):
+        first_application = PKMIdeaContributeApplyTeam.objects.filter(idea_contribute=instance.idea_contribute).order_by('created').first()
+
+        # If this is the first application and its status is still 'Pending', accept it
+        if instance == first_application and instance.status == 'P':
+            instance.status = 'A'
+            instance.save()
+
+            # Reject all other applications for this idea contribute
+            other_applications = PKMIdeaContributeApplyTeam.objects.filter(idea_contribute=instance.idea_contribute).exclude(pk=instance.pk)
+            other_applications.update(status='R')
+
     user = instance.team.leader.user
     message = status_messages[instance.status]
 
     # BaseNotification(user, message).send_notification()
-    notification, created = Notification.objects.update_or_create(
-        user=user, defaults={'message': message})
-
+    Notification.objects.filter(user=user).update(message=message)
 
 # signal pkm idea contribution team to owner : OWNER
 @receiver(post_save, sender=PKMIdeaContributeApplyTeam)

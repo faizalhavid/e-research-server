@@ -386,9 +386,7 @@ class ForgetPasswordMail(serializers.ModelSerializer):
         fields = ('id', 'email')
 
     def validate(self, attrs):
-        print(attrs)
         user = User.objects.filter(email=attrs['email'])
-        print(user)
         if not user:
             raise failure_response_validation('Your account does not exist', 'validation')
         return attrs

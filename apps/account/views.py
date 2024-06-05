@@ -169,6 +169,7 @@ class ForgetPasswordMail(generics.CreateAPIView):
         user.string_activation=uuid.uuid4()
         user.save()
         htmly = get_template('email_forget_pass.html')
+        print(user.string_activation)
         c = {
             'email': user.email,
             'first_name': user.first_name,

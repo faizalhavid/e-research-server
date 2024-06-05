@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, permissions, filters, generics
 from apps.account.models import Student
 from apps.team.filters import TeamTaskFilter
@@ -6,7 +7,8 @@ from apps.team.serializers import TeamApplySerializer, TeamSerializer, TeamTaskS
 from django.db.models import Q, Case, When, BooleanField
 from django_filters.rest_framework import DjangoFilterBackend
 from utils.permissions import IsLeaderOrMembers, IsStudent
-
+from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
@@ -44,18 +46,27 @@ class TeamViewSet(viewsets.ModelViewSet):
 class TeamVacanciesViewSet(viewsets.ModelViewSet):
     queryset = TeamVacancies.objects.all()
     serializer_class = TeamVacanciesSerializer
-    # permission_classes = (permissions.IsAuthenticated, IsLeaderOrMembers)
     permission_classes = (permissions.IsAuthenticated, IsStudent)
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['description', 'role']
+    filterset_fields = ['team__slug']
     lookup_field = 'slug'
+        
 
- 
 class TeamApplyViewSet(viewsets.ModelViewSet):
     queryset = TeamApply.objects.all()
     serializer_class = TeamApplySerializer
     permission_classes = (permissions.IsAuthenticated, IsStudent)
     lookup_field = 'vacancies_id'
+
+    @action(detail=False, methods=['get'])
+    def get_user(self, request):
+        user = request.user
+        student = Student.objects.filter(user=user).first()
+        if not student:
+            return TeamApply.objects.none()
+        return TeamApply.objects.filter(user=student)
+
 
  
 
@@ -94,5 +105,4 @@ class UserTeamTaskList(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         student = Student.objects.filter(user=user).first()
-
         return TeamTask.objects.filter(Q(team__leader=student) | Q(team__members=student))

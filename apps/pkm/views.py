@@ -1,3 +1,5 @@
+from django.shortcuts import get_object_or_404
+from requests import Response
 from rest_framework import permissions, viewsets,filters,views,mixins
 
 from apps.pkm.filter import PKMActivityScheduleFilter
@@ -5,9 +7,11 @@ from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMIdeaContr
 from apps.pkm.serializers import PKMActivityScheduleSerializer, PKMIdeaContributeApplyTeamSerializer, PKMIdeaContributeSerializer, PKMSchemeSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 
-from utils.drf_http_permission import ReadOnlyModelViewSet
+from apps.team.models import Team
+from rest_framework.pagination import PageNumberPagination
 from utils.exceptions import success_response
 from django.db.models import Q
+from rest_framework.decorators import action
 
 
 class PKMSchemeList(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin):
@@ -46,6 +50,12 @@ class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
     def get_queryset(self):
         return PKMIdeaContribute.objects.filter(status='P')
+
+    @action(detail=False, methods=['get'])
+    def by_user(self, request, *args, **kwargs):
+        user_contributions = PKMIdeaContribute.objects.filter(user=request.user, status='P')
+        serializer = self.get_serializer(user_contributions, many=True)
+        return success_response('Idea Contribute by User', serializer.data)
     
 class IdeaContributeReportView(views.APIView):
     def get(self, request):
@@ -78,12 +88,14 @@ class IdeaContributeReportView(views.APIView):
         )
     
 
+
 class PKMIdeaContributeApplyTeamViewSet(viewsets.ModelViewSet):
     serializer_class = PKMIdeaContributeApplyTeamSerializer
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['team__name', 'idea_contribute__title', 'status']
+    filterset_fields = ['team__slug', 'idea_contribute__user', 'status']
     lookup_field = 'idea_contributed_slug'
-    authentication_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user

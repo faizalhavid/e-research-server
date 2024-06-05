@@ -12,6 +12,7 @@ class Team(models.Model):
     name = models.CharField(max_length=200, unique=True)
     description = models.TextField()
     image = models.ImageField(upload_to=team_directory_path, blank=True, null=True)
+    file_approvement_lecturer = models.FileField(upload_to='team/approvement/', blank=True, null=True)
     leader = models.ForeignKey('account.Student', related_name='led_teams', on_delete=models.CASCADE, blank=True, null=True)
     lecturer = models.ForeignKey('account.Lecturer', related_name='lectured_teams', on_delete=models.CASCADE, blank=True, null=True)
     members = models.ManyToManyField('account.Student', related_name='teams', blank=True)
@@ -23,6 +24,7 @@ class Team(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     slug = models.SlugField(unique=True, blank=True, null=True)
+    
     def __str__(self):
         return self.name 
 

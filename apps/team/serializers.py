@@ -16,13 +16,22 @@ class TeamSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(max_length=None, use_url=True, allow_null=True, required=False)
     members = serializers.ListField(child=serializers.IntegerField(), write_only=True)
     lecturer = serializers.PrimaryKeyRelatedField(queryset=Lecturer.objects.all())
+    user_role = serializers.SerializerMethodField()
     class Meta:
         model = Team
         fields = '__all__'
-        read_only_fields = ('id', 'leader', 'created_at', 'updated_at')
-        extra_kwargs = {
-         'description': {'write_only': True},
-        }
+        read_only_fields = ('id', 'leader', 'created_at', 'updated_at','slug','user_role')
+
+    
+    def get_user_role(self, obj):
+        user = self.context['request'].user
+        
+        if obj.leader.user_id == user.id:
+            return 'leader'
+        elif user.id in obj.members.values_list('user_id', flat=True):
+            return 'member'
+        else:
+            return 'none'
         
     def validate(self, data):
         user = self.context['request'].user
@@ -62,12 +71,15 @@ class TeamVacanciesSerializer(TaggitSerializer,serializers.ModelSerializer):
     class Meta:
         model = TeamVacancies
         fields = '__all__'
-        
+    
+   
+
     def validate(self, data):
         team = self.context['team']
         if team.status != 'ACTIVE':
             raise failure_response_validation('Team is not active')
         return data
+    
 class TeamApplySerializer(serializers.ModelSerializer):
     class Meta:
         model = TeamApply
@@ -79,7 +91,7 @@ class TeamApplySerializer(serializers.ModelSerializer):
         
     def validate(self, data):
         vacancies = self.context['vacancies']
-        user = self.context['request'].user
+        user = self.    context['request'].user
         if vacancies.team.status != 'ACTIVE':
             raise failure_response_validation('Team is not active')
         if vacancies.team.members.filter(user=user).exists():

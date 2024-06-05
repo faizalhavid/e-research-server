@@ -39,7 +39,7 @@ router.register(r'proposals/submission', SubmissionProposalViewSet, basename='su
 router.register(r'proposals/submission-apply/(?P<team_id>\d+)', SubmissionProposalApplyViewSet, basename='submission-apply')
 
 router.register(r'team/vacancies', TeamVacanciesViewSet, basename='team-vacancies')
-router.register(r'team/vacancies/applications', TeamApplyViewSet, basename='team-applications')
+router.register(r'team/vacancies/apply', TeamApplyViewSet, basename='team-applications')
 router.register(r'team/(?P<team_id>\d+)/tasks', TeamTaskViewSet, basename='unique_teamtasks')
 router.register(r'team', TeamViewSet, basename='team')
 

@@ -4,38 +4,79 @@
 <head>
     <title>HTML email template</title>
     <meta name="viewport" content="width = 375, initial-scale = -1">
-</head>
 
-<body style="background-color: #ffffff; font-size: 16px;">
+</head>
+<script src="https://kit.fontawesome.com/916ad36f1a.js" crossorigin="anonymous"></script>
+
+<body style="background-color: #ffffff; font-size: 16px; color:#858585">
     <center>
         <table align="center" border="0" cellpadding="0" cellspacing="0" style="height:100%; width:600px;">
             <tr>
-                <td align="center" bgcolor="#ffffff" style="padding:10px">
+                <td align="left" bgcolor="#ffffff" style="padding:30px">
                     <a href="https://techconsulta.com">
-                        <img src="https://techconsulta.com/_next/image?url=%2Fimages%2Fhome-page%2Fheader%2Flogo.png&w=1920&q=75" style="max-width: 50%; height: auto;">
+                        <img src="https://res.cloudinary.com/dkuvu0lpn/image/upload/v1717420023/vvf1phkap7hjidshaanw.png"
+                            style="max-width: 50%; height: auto;">
                     </a>
                 </td>
             </tr>
             <!-- BEGIN EMAIL -->
             <tr>
                 <td align="center" bgcolor="#ffffff" style="padding:30px">
-                    <p style="text-align:left">Hello, {{ first_name }} {{ last_name }}<br><br> Thank you for entrusting Tech Consulta. We are a platform-based technology consulting firm that helps deliver solutions for companies tech projects and software development outsource on demand. Based in Indonesia, our consultants help connect local world-class software engineers with world-class companies
+                    <p style="text-align:left">Hai,
+                        <span style="font-weight: bold;"> {{ first_name }} {{ last_name }}</span>
+                        <br><br>
+                        Terima kasih sudah mendaftar di E Research, kami sangat senang Anda bergabung dengan kami, E
+                        Research adalah platform yang memungkinkan Anda untuk berbagi penelitian, menemukan penelitian
+                        yang relevan, dan berkolaborasi dengan peneliti lainnya.
                     </p>
-                    <p>Before we get started, we need to verify that you really own this account.</p>
-                    <p>Click the button below to verify this email address.</p>
-                    <p>
-                        <a href="https://techconsulta.com/thanks-for-register/{{user_id}}/{{ user_uuid}}" style="color: whitesmoke;">
-                            <button type="button"
-                                style="border-radius: 12px;background-color: #34a853;color: whitesmoke;border: none;font-size: 16px;padding: 14px 40px;">
-                                Verify Email Address
-                            </button>
-                        </a>
                     </p>
-                    <p style="text-align:left">After the verification process, our team will check the completeness and suitability of your account. If there are problems with the process, we will immediately contact you via email listed during registration.</a><br>
+                    <p>Sebelum kita mulai, kami perlu memverifikasi alamat email Anda, untuk itu kami meminta Anda untuk
+                        menekan tombol di bawah ini.</p>
+                    <br>
+                    <a href="http://localhost:3000/auth/activation/{{user_id}}/{{user_uuid}}"
+                        style="color: whitesmoke;">
+                        <button type="button"
+                            style="border-radius: 12px;background-color: #2279FC;color: whitesmoke;border: none;font-size: 16px;padding: 14px 40px;width: 100%; margin:10px 0px">
+                            Verify Email Address
+                        </button>
+                    </a>
+                    <br>
                     </p>
                     <p style="text-align:left">
-                        Tech Consulta Team
+                        Setelah proses verifikasi, tim kami akan memeriksa kelengkapan dan
+                        kesesuaian akun Anda. Jika ada kendala dalam prosesnya, kami akan segera menghubungi
+                        Anda melalui email yang tercantum pada saat pendaftaran
                     </p>
+                    <p style="text-align:left">
+                        Jika kamu tidak melakukan aktivitas ini, abaikan email ini atau hubungi kami.
+                    </p>
+                    <br>
+                    <p style="text-align:center;margin-bottom:30px">
+                        Ayo, mulai bagikan kreativitasmu di <a href="your_target_url">
+                            <span style="font-weight: bold;color:#2279FC">E
+                                Research</span>
+                        </a> !
+                    </p>
+
+                    <hr style="border: 1px solid #E9E9E9; width: 100%; margin: 20px 0px;">
+                    <p style="text-align:left">
+                        E Research <br>
+                        Politeknik Elektronika Negeri Surabaya
+                    </p>
+                    <ul style="list-style-type: none; padding: 0;">
+                        <li
+                            style="display: inline-block; margin-right: 10px;padding:10px;background-color:#6C6C70;border-radius: 100%;">
+                            <a href="https://www.instagram.com/eresearch_pens/">
+                                <i class="fa-brands fa-instagram" style="color: #ffffff;"></i> <!-- Instagram color -->
+                            </a>
+                        </li>
+                        <li
+                            style="display: inline-block; margin-right: 10px;padding:10px;background-color:#6C6C70;border-radius: 100%;">
+                            <a href="mailto:nurfaizal966@gmail.com?subject=Email%20Subject&body=Email%20Body">
+                                <i class="fa-regular fa-envelope" style="color: #ffffff;"></i>
+                            </a>
+                        </li>
+                    </ul>
                 </td>
             </tr>
             </tbody>

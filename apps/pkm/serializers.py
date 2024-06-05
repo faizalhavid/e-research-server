@@ -5,6 +5,8 @@ from rest_framework import serializers
 from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
 
+from apps.team.serializers import TeamSerializer
+
 
 class PKMSchemeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -25,10 +27,15 @@ class PKMActivityScheduleSerializer(serializers.ModelSerializer):
 
 class PKMIdeaContributeSerializer(TaggitSerializer,serializers.ModelSerializer):
     tags = TagListSerializerField()
-
+    team = serializers.SerializerMethodField()
     class Meta:
         model = PKMIdeaContribute
         fields = '__all__'
+    
+    def get_team(self, obj):
+        idea_team_apply = obj.apply_teams.get(status='A')
+        team = idea_team_apply.team
+        return TeamSerializer(team).data
 
     def to_representation(self, instance):
         # Get default serialized data
