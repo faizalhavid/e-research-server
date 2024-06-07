@@ -38,11 +38,11 @@ class SubmissionProposalSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubmissionProposal
         fields = '__all__'
+
     def get_count_of_applicants(self, obj):
         return obj.applies.count()
 
 class TagSerializer(TaggitSerializer, serializers.ModelSerializer):
-    tags = TagListSerializerField()
     class Meta:
         model = Tag
         fields = '__all__'
@@ -52,17 +52,15 @@ class SubmissionProposalApplySerializer(serializers.ModelSerializer, TaggitSeria
     class Meta:
         model = SubmissionsProposalApply
         fields = '__all__'
-        read_only_fields = ['lecturer']
+        read_only_fields = ['lecturer','slug']
     
-    def create(self, validated_data):
-        team_id = self.context['view'].kwargs.get('team_id')
-        team = Team.objects.get(id=team_id)
-        submission = SubmissionsProposalApply.objects.create(team=team, **validated_data)
-        return submission
+
 
     def validate(self, attrs):
-        team_id = self.context['view'].kwargs.get('team_id')
-        team = Team.objects.get(id=team_id)
+
+        team = attrs.get('team')
+        if team.status != 'ACTIVE':
+            raise failure_response_validation('Team is not active')
         applied_submissions = team.submissions_proposals_apply.filter(Q(status='APPLIED') | Q(status='REJECTED'))
         if applied_submissions.exists():
             raise failure_response_validation("You can't create a submission for a team that has an applied or rejected submission")

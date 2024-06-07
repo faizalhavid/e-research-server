@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from requests import Response
 from rest_framework import permissions, viewsets,filters,views,mixins
 
-from apps.pkm.filter import PKMActivityScheduleFilter
+from apps.pkm.filter import PKMActivityScheduleFilter, PKMIdeaContributeFilter
 from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMIdeaContributeApplyTeam, PKMScheme
 from apps.pkm.serializers import PKMActivityScheduleSerializer, PKMIdeaContributeApplyTeamSerializer, PKMIdeaContributeSerializer, PKMSchemeSerializer
 from django_filters.rest_framework import DjangoFilterBackend
@@ -41,13 +41,14 @@ class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
 
 
 class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
-    # queryset = PKMIdeaContribute.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PKMIdeaContributeSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'tags__name', 'description']
-    ordering_fields = ['created']
+    filterset_class = PKMIdeaContributeFilter
+    ordering_fields = ['created', 'applied_date']
     lookup_field = 'slug'
+
     def get_queryset(self):
         return PKMIdeaContribute.objects.filter(status='P')
 

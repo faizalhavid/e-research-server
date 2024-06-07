@@ -3,7 +3,7 @@ from rest_framework import viewsets, permissions, generics,filters,mixins
 from apps.proposals.models import  SubmissionProposal, SubmissionsProposalApply
 from apps.proposals.serializers import SubmissionProposalApplySerializer, SubmissionProposalSerializer, TagSerializer
 from taggit.models import Tag
-from apps.proposals.filter import  SubmissionProposalApplyFilter
+from apps.proposals.filter import  SubmissionProposalApplyFilter, TagFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
 
@@ -31,11 +31,10 @@ class SubmissionProposalViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, 
 class TagListView(generics.ListAPIView):
     serializer_class = TagSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = TagFilter  # Corrected from filter_class to filterset_class
     search_fields = ['name']
-    
-    def get_queryset(self):
-        return Tag.objects.filter(proposals__isnull=False).distinct()
+    queryset = Tag.objects.all()
     
 class SubmissionProposalApplyViewSet(viewsets.ModelViewSet):
     serializer_class = SubmissionProposalApplySerializer
@@ -44,8 +43,6 @@ class SubmissionProposalApplyViewSet(viewsets.ModelViewSet):
     filterset_class = SubmissionProposalApplyFilter
     search_fields = ['submission__title', 'lecturer__user__email', 'status']
     ordering_fields = ['created_at']
-    
-    def get_queryset(self):
-        team_id = self.kwargs.get('team_id')
-        return SubmissionsProposalApply.objects.filter(team_id=team_id)
+    queryset = SubmissionsProposalApply.objects.all()
+    lookup_field = 'slug'
     

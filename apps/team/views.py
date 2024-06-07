@@ -37,9 +37,7 @@ class TeamViewSet(viewsets.ModelViewSet):
                     .distinct()
                 )
             
-    def perform_create(self, serializer):
-        if not self.request.user.is_superuser:
-            serializer.save(leader=self.request.user)
+
 
 
 

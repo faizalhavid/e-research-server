@@ -36,7 +36,7 @@ router.register(r'pkm/activity-schedule', PKMActivityScheduleViewSet, basename='
 
 # router.register(r'proposals/(?P<team_id>\d+)', ProposalViewSet, basename='proposals')
 router.register(r'proposals/submission', SubmissionProposalViewSet, basename='submission-proposal')
-router.register(r'proposals/submission-apply/(?P<team_id>\d+)', SubmissionProposalApplyViewSet, basename='submission-apply')
+router.register(r'proposals/submission-apply', SubmissionProposalApplyViewSet, basename='submission-apply')
 
 router.register(r'team/vacancies', TeamVacanciesViewSet, basename='team-vacancies')
 router.register(r'team/vacancies/apply', TeamApplyViewSet, basename='team-applications')
@@ -73,7 +73,7 @@ urlpatterns = [
     ])), 
 
         
-        path('proposals/tag', TagListView.as_view(), name='proposal-tag'),   
+        path('tags', TagListView.as_view(), name='proposal-tag'),   
         path('pkm/idea-contribute-report' ,  IdeaContributeReportView.as_view(), name='idea-contribute-report'),
 
         path('team/user-team-task',UserTeamTaskList.as_view(), name='user-team-task-list'),

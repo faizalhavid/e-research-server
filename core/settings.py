@@ -256,3 +256,4 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 # OTHER SETTINGS
 ASGI_APPLICATION = 'core.asgi.application'
 X_FRAME_OPTIONS = 'SAMEORIGIN'
+TAGGIT_FORCE_LOWERCASE = True

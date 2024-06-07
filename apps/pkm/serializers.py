@@ -31,12 +31,21 @@ class PKMIdeaContributeSerializer(TaggitSerializer,serializers.ModelSerializer):
     class Meta:
         model = PKMIdeaContribute
         fields = '__all__'
+        read_only_fields = ('user', 'status', 'created', 'applied_date')
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        validated_data['user'] = user
+        return super().create(validated_data)
     
     def get_team(self, obj):
-        idea_team_apply = obj.apply_teams.get(status='A')
-        team = idea_team_apply.team
-        return TeamSerializer(team).data
-
+        try:
+            idea_team_apply = obj.apply_teams.get(status='A')
+            team = idea_team_apply.team
+            return TeamSerializer(team, context=self.context).data
+        except PKMIdeaContributeApplyTeam.DoesNotExist:
+            return None
+        
     def to_representation(self, instance):
         # Get default serialized data
         representation = super().to_representation(instance)

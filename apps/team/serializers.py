@@ -33,6 +33,14 @@ class TeamSerializer(serializers.ModelSerializer):
         else:
             return 'none'
         
+    def create(self, validated_data):
+        user = self.context['request'].user
+        leader = Student.objects.get(user=user) if not user.is_superuser else None
+        members = validated_data.pop('members')
+        team = Team.objects.create(leader=leader, **validated_data)
+        team.members.set(members)
+        return team
+        
     def validate(self, data):
         user = self.context['request'].user
         leader = Student.objects.get(user=user) if not user.is_superuser else None
@@ -42,7 +50,7 @@ class TeamSerializer(serializers.ModelSerializer):
         if Team.objects.filter(leader=leader, status='ACTIVE').exists():
             raise failure_response_validation({'leader': 'You only can be a leader in one active team'})
     
-        if Team.objects.filter(lecturer=lecturer, status='ACTIVE').count >= 10:
+        if Team.objects.filter(lecturer=lecturer, status='ACTIVE').count() >= 10:
             raise failure_response_validation('The lecturer has reached the maximum number of teams')
 
         if leader in members:
@@ -51,7 +59,7 @@ class TeamSerializer(serializers.ModelSerializer):
         if any(Team.objects.filter(members=member).count() > 3 for member in members):
             raise failure_response_validation({'members': 'The member has joined the maximum number of teams'})
     
-        unregistered_member = next((member for member in members if member.user is None), None)
+        unregistered_member = next((member for member in members if hasattr(member, 'user') and member.user is None), None)
         if unregistered_member:
             raise failure_response_validation({"members": f"{unregistered_member.full_name} is not registered in the system"})
         return data
