@@ -1,3 +1,4 @@
+import hashlib
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
@@ -84,6 +85,7 @@ class PKMIdeaContribute(models.Model):
 class PKMIdeaContributeApplyTeam(models.Model):
     idea_contribute = models.ForeignKey('pkm.PKMIdeaContribute', on_delete=models.CASCADE, related_name='apply_teams')
     team = models.ForeignKey('team.Team', on_delete=models.CASCADE, related_name='apply_ideas')
+    message = models.TextField(blank=True, default='')
     created = models.DateTimeField(auto_now_add=True)
     STATUS_CHOICES = (
         ('P', 'Pending'),
@@ -91,11 +93,15 @@ class PKMIdeaContributeApplyTeam(models.Model):
         ('R', 'Rejected'),
     )
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='P')
+    slug = models.SlugField(unique=True, blank=True, null=True)
     
     class Meta:
         verbose_name = 'Apply Team Idea Contribute'
         verbose_name_plural = 'Apply Team Idea Contribute'
     def __str__(self):
+        if not self.slug:
+            self.slug = hashlib.sha256(self.name.encode()).hexdigest()
+        
         return f"{self.team.name} - {self.idea_contribute.title}"
     
     

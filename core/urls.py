@@ -29,7 +29,7 @@ schema_view = views.get_schema_view(
 router = routers.DefaultRouter(trailing_slash=False)
 
 router.register(r'pkm/idea-contribute', PKMIdeaContributeViewSet, basename='idea-contribute')
-router.register(r'pkm/idea-contribute/apply', PKMIdeaContributeApplyTeamViewSet, basename='idea-contribute-apply')
+router.register(r'pkm/idea-contribute-apply', PKMIdeaContributeApplyTeamViewSet, basename='idea-contribute-apply')
 
 router.register(r'pkm/scheme', PKMSchemeList, basename='scheme')
 router.register(r'pkm/activity-schedule', PKMActivityScheduleViewSet, basename='activity-schedule')

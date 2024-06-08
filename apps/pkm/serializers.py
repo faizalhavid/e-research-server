@@ -66,7 +66,25 @@ class PKMIdeaContributeSerializer(TaggitSerializer,serializers.ModelSerializer):
 
 
 
-class PKMIdeaContributeApplyTeamSerializer(serializers.ModelSerializer):
+class PKMIdeaContributeApplyTeamSerializer(serializers.ModelSerializer):    
+
     class Meta:
         model = PKMIdeaContributeApplyTeam
         fields = '__all__'
+        read_only_fields = ['slug', 'status', 'created', 'applied_date']
+
+    def validate(self, attrs):
+        idea_contribute = attrs.get('idea_contribute')
+        team = attrs.get('team')
+        if team.status != 'ACTIVE':
+            raise serializers.ValidationError('Team is not active')
+        applied_teams = idea_contribute.apply_teams.filter(status='A')
+        if applied_teams.exists():
+            raise serializers.ValidationError("You can't apply team for an idea contribute that has an applied team")
+        return attrs
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        idea_contribute = PKMIdeaContributeSerializer(instance.idea_contribute, context=self.context).data
+        representation['idea_contribute'] = idea_contribute
+        return representation

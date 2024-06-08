@@ -15,6 +15,12 @@ from utils.handle_file_upload import UploadToPathAndRename
 
 class SubmissionProposal(models.Model):
     program = models.ForeignKey('pkm.PKMProgram', related_name='submissions', on_delete=models.CASCADE, default=1)
+    BATCH_CHOICES = [
+        ('BATCH 1', 'Batch 1'),
+        ('BATCH 2', 'Batch 2'),
+        ('BATCH 3', 'Batch 3'),
+        ('REVISION', 'Revision'),
+    ]
     title=models.CharField(max_length=200)
     description=models.TextField( blank=True, default='')
     created_at=models.DateTimeField(auto_now_add=True)

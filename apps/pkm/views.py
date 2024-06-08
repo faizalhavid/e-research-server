@@ -57,7 +57,8 @@ class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
         user_contributions = PKMIdeaContribute.objects.filter(user=request.user, status='P')
         serializer = self.get_serializer(user_contributions, many=True)
         return success_response('Idea Contribute by User', serializer.data)
-    
+
+
 class IdeaContributeReportView(views.APIView):
     def get(self, request):
         user = request.user
@@ -95,14 +96,20 @@ class PKMIdeaContributeApplyTeamViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['team__name', 'idea_contribute__title', 'status']
     filterset_fields = ['team__slug', 'idea_contribute__user', 'status']
-    lookup_field = 'idea_contributed_slug'
+    lookup_field = 'slug'
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser:
             return PKMIdeaContributeApplyTeam.objects.all()
-        if PKMIdeaContributeApplyTeam.objects.filter(idea_contribute__user=user).exists():
-            return PKMIdeaContributeApplyTeam.objects.filter(idea_contribute__user=user)
-        
         return PKMIdeaContributeApplyTeam.objects.filter(Q(team__leader=user) | Q(team__members=user))
+        # if PKMIdeaContributeApplyTeam.objects.filter(idea_contribute__user=user).exists():
+        #     return PKMIdeaContributeApplyTeam.objects.filter(idea_contribute__user=user)
+
+    # @action(detail=False, url_path='apply-team/(?P<team_slug>[-\w]+)', methods=['get'])
+    # def apply_team(self, request,  team_slug):
+    #     team = get_object_or_404(Team, slug=team_slug)
+    #     team_apply_ideas = PKMIdeaContributeApplyTeam.objects.filter(team=team)
+    #     serializer = PKMIdeaContributeApplyTeamSerializer(team_apply_ideas, many=True)
+    #     return success_response('Apply Team Idea Contribute', serializer.data)

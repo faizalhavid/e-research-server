@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, permissions, filters, generics
 from apps.account.models import Student
-from apps.team.filters import TeamTaskFilter
+from apps.team.filters import TeamFilter, TeamTaskFilter
 from apps.team.models import Team, TeamApply, TeamTask, TeamVacancies
 from apps.team.serializers import TeamApplySerializer, TeamSerializer, TeamTaskSerializer, TeamVacanciesSerializer
 from django.db.models import Q, Case, When, BooleanField
@@ -14,7 +14,8 @@ class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
     permission_classes = (permissions.IsAuthenticated, IsStudent)
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter] 
+    filterset_class = TeamFilter
     search_fields = ['name', 'description']
     lookup_field = 'slug'
 
@@ -36,6 +37,7 @@ class TeamViewSet(viewsets.ModelViewSet):
                     .order_by('-is_leader')
                     .distinct()
                 )
+
             
 
 
