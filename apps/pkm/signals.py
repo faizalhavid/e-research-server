@@ -61,9 +61,9 @@ def pkm_ending_notification():
         )
         for program in ending_programs:
             if days == 0:
-                message = f"PKM Program {program.name} is ending today!"
+                message = f"{program.name} is ending today!"
             else:
-                message = f"PKM Program {program.name} is ending in {days} days!"
+                message = f"{program.name} is ending in {days} days!"
 
             # BaseNotification(program, message).send_notification()
             Notification.objects.create(user=program.user, message=message)

@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
@@ -18,5 +19,5 @@ class Notification(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = hashlib.sha256(self.message.encode()).hexdigest()[:15]
+            self.slug = str(uuid.uuid4())
         super().save(*args, **kwargs)

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from apps.account.models import Student
 from apps.pkm.serializers import PKMProgramSerializer
 from apps.proposals.models import  SubmissionProposal, SubmissionsProposalApply
 from apps.team.models import Team
@@ -35,12 +36,19 @@ from utils.exceptions import failure_response_validation
 class SubmissionProposalSerializer(serializers.ModelSerializer):
     count_of_applicants = serializers.SerializerMethodField()
     program = PKMProgramSerializer()
+    team_apply_status = serializers.SerializerMethodField()
     class Meta:
         model = SubmissionProposal
         fields = '__all__'
 
     def get_count_of_applicants(self, obj):
         return obj.applies.count()
+    
+    def get_team_apply_status(self, obj):
+        student = Student.objects.get(user=self.context['request'].user)
+        team = Team.objects.filter(leader=student, status='ACTIVE').first()
+        proposal_apply = obj.applies.filter(status__in=['APPLIED', 'REJECTED','REVISION','PASSED', 'PASSED FUNDING'], team=team).first()
+        return proposal_apply.status if proposal_apply else None
 
 class TagSerializer(TaggitSerializer, serializers.ModelSerializer):
     class Meta:

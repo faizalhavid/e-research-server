@@ -25,7 +25,7 @@ class TeamSerializer(serializers.ModelSerializer):
     
     def get_user_role(self, obj):
         user = self.context['request'].user
-        
+        print(obj.leader.user_id, user.id,obj.name)
         if obj.leader.user_id == user.id:
             return 'leader'
         elif user.id in obj.members.values_list('user_id', flat=True):

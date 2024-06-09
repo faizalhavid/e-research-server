@@ -68,7 +68,6 @@ class SubmissionsProposalApply(models.Model):
         return f"{self.team.name} - {self.submission.title}"
     
     class Meta:
-        unique_together = ('team', 'submission', 'title',)
         verbose_name_plural = '2. Pengumpulan Proposal'
 
     def save(self, *args, **kwargs):

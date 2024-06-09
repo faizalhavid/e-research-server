@@ -4,8 +4,11 @@ from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMIdeaContr
 from rest_framework import serializers
 from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
+from django.db.models import Q
 
+from apps.team.models import Team
 from apps.team.serializers import TeamSerializer
+from utils.exceptions import failure_response, failure_response_validation
 
 
 class PKMSchemeSerializer(serializers.ModelSerializer):
@@ -28,6 +31,7 @@ class PKMActivityScheduleSerializer(serializers.ModelSerializer):
 class PKMIdeaContributeSerializer(TaggitSerializer,serializers.ModelSerializer):
     tags = TagListSerializerField()
     team = serializers.SerializerMethodField()
+    team_apply_status = serializers.SerializerMethodField()
     class Meta:
         model = PKMIdeaContribute
         fields = '__all__'
@@ -45,6 +49,14 @@ class PKMIdeaContributeSerializer(TaggitSerializer,serializers.ModelSerializer):
             return TeamSerializer(team, context=self.context).data
         except PKMIdeaContributeApplyTeam.DoesNotExist:
             return None
+        
+    def get_team_apply_status(self, obj):
+        # if not self.context['request'].user.groups.filter(name='Student').exists():
+        #     return None
+        student = Student.objects.get(user=self.context['request'].user)
+        team = Team.objects.filter(leader=student, status='ACTIVE').first()
+        idea_team_apply = obj.apply_teams.filter(status__in=['A', 'P', 'R'], team=team).first()
+        return idea_team_apply.status if idea_team_apply else None
         
     def to_representation(self, instance):
         # Get default serialized data
@@ -76,11 +88,35 @@ class PKMIdeaContributeApplyTeamSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         idea_contribute = attrs.get('idea_contribute')
         team = attrs.get('team')
+        submission = attrs.get('submission')  # Assuming submission is part of attrs
+        title = attrs.get('title')  # Assuming title is part of attrs
+    
+        # Existing validations
         if team.status != 'ACTIVE':
-            raise serializers.ValidationError('Team is not active')
-        applied_teams = idea_contribute.apply_teams.filter(status='A')
-        if applied_teams.exists():
-            raise serializers.ValidationError("You can't apply team for an idea contribute that has an applied team")
+            raise failure_response_validation('Team is not active')
+    
+        if idea_contribute.apply_teams.filter(team=team, status__in=['A', 'P']).exists():
+            raise failure_response_validation("This team has already applied or been accepted for this idea contribute")
+    
+        if idea_contribute.apply_teams.filter(status='A').exists():
+            raise failure_response_validation("You can't apply a team for an idea contribute that has an accepted team")
+    
+        if idea_contribute.user == team.leader.user:
+            raise failure_response_validation("You can't apply your team for your own idea contribute")
+    
+        if PKMIdeaContributeApplyTeam.objects.filter(team=team, status='A').exclude(idea_contribute=idea_contribute).exists():
+            raise failure_response_validation("This team has already applied to another idea")
+    
+        # New validation for unique_together constraint
+        if self.instance:
+            # If updating, exclude the current instance from the unique check
+            if PKMIdeaContributeApplyTeam.objects.filter(team=team, submission=submission, title=title).exclude(pk=self.instance.pk).exists():
+                raise failure_response_validation("You can't apply a team for the same submission and title")
+        else:
+            # For new instances, just check if any existing match the criteria
+            if PKMIdeaContributeApplyTeam.objects.filter(team=team, submission=submission, title=title).exists():
+                raise failure_response_validation("You can't apply a team for the same submission and title")
+    
         return attrs
 
     def to_representation(self, instance):

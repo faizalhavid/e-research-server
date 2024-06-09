@@ -98,9 +98,10 @@ class PKMIdeaContributeApplyTeam(models.Model):
     class Meta:
         verbose_name = 'Apply Team Idea Contribute'
         verbose_name_plural = 'Apply Team Idea Contribute'
+        # unique_together = ('idea_contribute', 'team')
     def __str__(self):
         if not self.slug:
-            self.slug = hashlib.sha256(self.name.encode()).hexdigest()
+            self.slug = hashlib.sha256((self.idea_contribute.title + self.team.name).encode('utf-8')).hexdigest()
         
         return f"{self.team.name} - {self.idea_contribute.title}"
     
