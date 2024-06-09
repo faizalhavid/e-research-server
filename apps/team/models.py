@@ -1,8 +1,11 @@
 import hashlib
+import os
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import ArrayField
 from taggit.managers import TaggableManager
+
+from utils.handle_file_upload import UploadToPathAndRename
 
 def team_directory_path(instance, filename):
     return f'team/{instance.name}/{filename}'
@@ -12,7 +15,7 @@ class Team(models.Model):
     name = models.CharField(max_length=200, unique=True)
     description = models.TextField()
     image = models.ImageField(upload_to=team_directory_path, blank=True, null=True)
-    file_approvement_lecturer = models.FileField(upload_to='team/approvement/', blank=True, null=True)
+    file_approvement_lecturer = models.FileField(upload_to=UploadToPathAndRename('team/approvement/'))
     leader = models.ForeignKey('account.Student', related_name='led_teams', on_delete=models.CASCADE, blank=True, null=True)
     lecturer = models.ForeignKey('account.Lecturer', related_name='lectured_teams', on_delete=models.CASCADE, blank=True, null=True)
     members = models.ManyToManyField('account.Student', related_name='teams', blank=True)
@@ -30,7 +33,7 @@ class Team(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = hashlib.sha256(self.name.encode()).hexdigest()[:15]
+            self.slug = hashlib.sha256(self.name.encode()).hexdigest()[:20]
         super().save(*args, **kwargs)
     
 

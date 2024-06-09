@@ -58,6 +58,8 @@ class TeamSerializer(serializers.ModelSerializer):
     
         if any(Team.objects.filter(members=member).count() > 3 for member in members):
             raise failure_response_validation({'members': 'The member has joined the maximum number of teams'})
+        
+        
     
         unregistered_member = next((member for member in members if hasattr(member, 'user') and member.user is None), None)
         if unregistered_member:

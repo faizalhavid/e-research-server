@@ -6,6 +6,7 @@ from apps.team.models import Team, TeamApply, TeamTask, TeamVacancies
 from apps.team.serializers import TeamApplySerializer, TeamSerializer, TeamTaskSerializer, TeamVacanciesSerializer
 from django.db.models import Q, Case, When, BooleanField
 from django_filters.rest_framework import DjangoFilterBackend
+from utils.exceptions import failure_response, failure_response_validation, success_response
 from utils.permissions import IsLeaderOrMembers, IsStudent
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
@@ -37,11 +38,15 @@ class TeamViewSet(viewsets.ModelViewSet):
                     .order_by('-is_leader')
                     .distinct()
                 )
-
+    @action(detail=False, methods=['patch'], url_path='update-image/(?P<slug>[-\w]+)', url_name='update-image')
+    def update_team_image(self, request, slug=None):
+        team = get_object_or_404(Team, slug=slug)
+        if not request.data.get('image'):
+            return failure_response('Image is required')
+        team.image = request.data['image']
+        team.save()
+        return success_response('Image updated successfully') 
             
-
-
-
 
 class TeamVacanciesViewSet(viewsets.ModelViewSet):
     queryset = TeamVacancies.objects.all()
