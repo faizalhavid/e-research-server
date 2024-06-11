@@ -43,5 +43,12 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}  
         script: |
+          # Stop and remove any existing container with the name "e-research-container"
+          docker stop e-research-container || true
+          docker rm e-research-container || true
+          
+          # Pull the latest image
           docker pull nurhavid1/e-research-server:latest
+          
+          # Run the new container
           docker run -d -p 8000:8000 --name e-research-container nurhavid1/e-research-server:latest
