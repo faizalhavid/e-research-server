@@ -1,10 +1,10 @@
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'eresearchdb ',
+        'NAME': 'eresearchdb',
         'USER': 'postgres',
         'PASSWORD': '220702',
-        'HOST': 'localhost',
+        'HOST': '103.161.184.106',
         'PORT': '5432',
     },
     # 'gcp': {
