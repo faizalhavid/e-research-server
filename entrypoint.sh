@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# Wait for the PostgreSQL server to be available
+# Use the DB_HOST environment variable to wait for the PostgreSQL server to be available
 echo "Waiting for PostgreSQL to start..."
-while ! nc -z db 5432; do
+while ! nc -z $DB_HOST $DB_PORT; do
     sleep 0.1
 done
 echo "PostgreSQL started"
