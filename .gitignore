@@ -1,4 +1,4 @@
-core/local_settings.py
+# core/local_settings.py
 .DS_Store
 .pyc
 __pycache__/
