@@ -14,6 +14,7 @@ COPY . .
 
 # Copy the entrypoint script and set it as the entrypoint
 COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /app/entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]
 
 CMD ["python", "manage.py", "runserver", "0.0.0.0:80"]
