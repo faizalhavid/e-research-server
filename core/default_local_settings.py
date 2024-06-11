@@ -4,7 +4,7 @@ DATABASES = {
         'NAME': 'e-research-db',
         'USER': 'postgres',
         'PASSWORD': '220702',
-        'HOST': 'localhost',
+        'HOST': 'e-research-server-db-1',
         'PORT': '5432',
     },
 }

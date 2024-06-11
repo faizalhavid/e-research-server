@@ -23,7 +23,7 @@ class Notification(models.Model):
     related_object = GenericForeignKey('content_type', 'object_id')
 
     class Meta:
-        ordering = ['-timestamp']
+        ordering = ['read', '-timestamp']
 
     def __str__(self):
         return self.message

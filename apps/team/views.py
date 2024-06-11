@@ -55,22 +55,21 @@ class TeamVacanciesViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['description', 'role']
     filterset_fields = ['team__slug']
-    lookup_field = 'slug'
+
         
 
 class TeamApplyViewSet(viewsets.ModelViewSet):
     queryset = TeamApply.objects.all()
     serializer_class = TeamApplySerializer
     permission_classes = (permissions.IsAuthenticated, IsStudent)
-    lookup_field = 'vacancies_id'
 
     @action(detail=False, methods=['get'])
     def get_user(self, request):
         user = request.user
         student = Student.objects.filter(user=user).first()
         if not student:
-            return TeamApply.objects.none()
-        return TeamApply.objects.filter(user=student)
+            return success_response('TeamApply fetched successfully', [])
+        return success_response('TeamApply fetched successfully', TeamApply.objects.filter(user=student))
 
 
  

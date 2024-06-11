@@ -51,8 +51,8 @@ class PKMIdeaContributeSerializer(TaggitSerializer,serializers.ModelSerializer):
             return None
         
     def get_team_apply_status(self, obj):
-        # if not self.context['request'].user.groups.filter(name='Student').exists():
-        #     return None
+        if not self.context['request'].user.groups.filter(name='Student').exists():
+            return None
         student = Student.objects.get(user=self.context['request'].user)
         team = Team.objects.filter(leader=student, status='ACTIVE').first()
         idea_team_apply = obj.apply_teams.filter(status__in=['A', 'P', 'R'], team=team).first()

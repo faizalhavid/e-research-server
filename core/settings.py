@@ -27,6 +27,7 @@ DEBUG = config('DEBUG', default='TRUE', cast=bool)
 BASE_URL = config('BASE_URL', default='http://localhost:8000')
 
 ALLOWED_HOSTS = ['*']
+DJANGO_ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -34,7 +35,7 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'jazzmin',
     'django.contrib.admin',
-    'daphne',
+    # 'daphne',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -154,7 +155,7 @@ CORS_ALLOW_HEADERS = ["*"]
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = [
-    'http://localhost:3000',  # Replace with the origin of your Next.js app
+    'http://localhost:3000',  
 ]
 
 # TEMPLATE, MEDIA AND STATIC
@@ -214,7 +215,7 @@ REST_FRAMEWORK = {
 
 # SIMPLE JWT
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'JWT_ALLOW_REFRESH': True,
     'JWT_EXPIRATION_DELTA': timedelta(seconds=60 * 60 * 24 * 7),
@@ -253,7 +254,17 @@ STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/media/'
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
+
+# SSL
+SECURE_SSL_REDIRECT = True
+SECURE_SSL_CERTIFICATE = config('SSL_CERTIFICATE')
+
+# SESSION AND CSRF COOKIE
+SESSION_COOKIE_SECURE = True  
+CSRF_COOKIE_SECURE = True 
+SECURE_HSTS_SECONDS = 31536000  # Contoh: HSTS aktif selama 1 tahun (31536000 detik)
 # OTHER SETTINGS
 ASGI_APPLICATION = 'core.asgi.application'
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 TAGGIT_FORCE_LOWERCASE = True
+

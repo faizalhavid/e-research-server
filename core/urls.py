@@ -38,8 +38,8 @@ router.register(r'pkm/activity-schedule', PKMActivityScheduleViewSet, basename='
 router.register(r'proposals/submission', SubmissionProposalViewSet, basename='submission-proposal')
 router.register(r'proposals/submission-apply', SubmissionProposalApplyViewSet, basename='submission-apply')
 
-router.register(r'team/vacancies', TeamVacanciesViewSet, basename='team-vacancies')
 router.register(r'team/vacancies/apply', TeamApplyViewSet, basename='team-applications')
+router.register(r'team/vacancies', TeamVacanciesViewSet, basename='team-vacancies')
 router.register(r'team/(?P<team_slug>[-\w]+)/tasks', TeamTaskViewSet, basename='unique_teamtasks')
 router.register(r'team', TeamViewSet, basename='team')
 

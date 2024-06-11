@@ -8,6 +8,7 @@ from taggit.serializers import (TagListSerializerField,
 from taggit.models import Tag
 from django.db.models import Q
 
+from apps.team.serializers import TeamSerializer
 from utils.exceptions import failure_response_validation
 
 # class ProposalSerializer(TaggitSerializer,serializers.ModelSerializer):
@@ -57,11 +58,18 @@ class TagSerializer(TaggitSerializer, serializers.ModelSerializer):
 
 class SubmissionProposalApplySerializer(serializers.ModelSerializer, TaggitSerializer):
     tags = TagListSerializerField()
+
     class Meta:
         model = SubmissionsProposalApply
         fields = '__all__'
         read_only_fields = ['lecturer','slug']
     
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        team_serializer_context = self.context
+        data['team'] = TeamSerializer(instance.team, context=team_serializer_context).data
+        data['submission'] = SubmissionProposalSerializer(instance.submission, context=team_serializer_context).data
+        return data
 
 
     def validate(self, attrs):

@@ -1,26 +1,19 @@
-version: '3.8'
-
+version: '3.3'
 services:
-  db:
-    image: postgres:13
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    environment:
-      POSTGRES_DB: mydatabase
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: e_research
+    restart: always
+    networks:
+      - e-research
+    # Uncomment and use the ports and volumes as needed
+    # ports:
+    #   - "8000:8000"
+    # volumes:
+    #   - .:/app
 
-  web:
-    build: .
-    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
-    volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgres://myuser:mypassword@db:5432/mydatabase
-    depends_on:
-      - db
-
-volumes:
-  postgres_data:
+networks:
+  e-research:
+    driver: bridge

@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from apps.account.models import Lecturer, Student
@@ -79,14 +80,26 @@ class TeamSerializer(serializers.ModelSerializer):
 class TeamVacanciesSerializer(TaggitSerializer,serializers.ModelSerializer):
     tags = TagListSerializerField()
     team = TeamSerializer(read_only=True)
+    user_apply_status = serializers.SerializerMethodField()
+
     class Meta:
         model = TeamVacancies
         fields = '__all__'
     
    
-
+    def get_user_apply_status(self, obj):
+        user = self.context['request'].user
+        try:
+            student = Student.objects.get(user=user)
+            team_apply = TeamApply.objects.filter(user=student, vacanicies=obj).first()
+            if team_apply:
+                return team_apply.status  # Mengembalikan nilai dari field status
+        except Student.DoesNotExist:
+            return None
+        return None
+    
     def validate(self, data):
-        team = self.context['team']
+        team = self.instance.team if self.instance else data.get('team')
         if team.status != 'ACTIVE':
             raise failure_response_validation('Team is not active')
         return data
@@ -99,18 +112,34 @@ class TeamApplySerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'resume': {'write_only': True},
         }
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        student = get_object_or_404(Student, user=user)
+        apply = TeamApply.objects.create(user=student,  **validated_data)
+        return apply
         
     def validate(self, data):
-        vacancies = self.context['vacancies']
-        user = self.    context['request'].user
-        if vacancies.team.status != 'ACTIVE':
+        vacancies = self.instance.vacanicies if self.instance else data.get('vacanicies')
+        user = self.context['request'].user
+        # Ensure you're getting a Student instance here
+        student = get_object_or_404(Student, user=user)
+        # Use the student instance for filtering, not the user directly
+        if TeamApply.objects.filter(user=student, vacanicies=vacancies).exists():
+            raise failure_response_validation('You already applied to this vacancies')
+        if Team.objects.filter(members=student, status='ACTIVE').exists():
+            raise failure_response_validation('You already joined a team')
+        if Team.objects.filter(leader=student, status='ACTIVE').exists():
+            raise failure_response_validation('You already lead a team')
+        if vacancies.team.  status != 'ACTIVE':
             raise failure_response_validation('Team is not active')
-        if vacancies.team.members.filter(user=user).exists():
-            raise failure_response_validation('You are already a member of this team')
+        
         return data
+        
     
     
 class TeamTaskSerializer(serializers.ModelSerializer):
+    team_name = serializers.SerializerMethodField()
     class Meta:
         model = TeamTask
         fields = '__all__'
@@ -123,6 +152,12 @@ class TeamTaskSerializer(serializers.ModelSerializer):
         task = TeamTask.objects.create(team=team, **validated_data)
         return task
     
+    def get_team_name(self, obj):
+        team_slug = self.context.get('team_slug')  # Use .get() to avoid KeyError
+        if team_slug:
+            team = Team.objects.get(slug=team_slug)
+            return team.name
+        return None  # Return None or a default value if 'team_slug' is not in context
     
     def validate(self, data):
         team_slug = self.context['team_slug']

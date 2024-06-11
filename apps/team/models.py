@@ -61,7 +61,7 @@ class TeamVacancies(models.Model):
     
 class TeamApply(models.Model):
     vacanicies = models.ForeignKey(TeamVacancies, related_name='applies', on_delete=models.CASCADE)
-    user = models.ForeignKey('account.User', related_name='applies', on_delete=models.CASCADE)
+    user = models.ForeignKey('account.Student', related_name='applies', on_delete=models.CASCADE)
     STATUS = (
         ('APPLIED', 'Applied'),
         ('ACCEPTED', 'Accepted'),
