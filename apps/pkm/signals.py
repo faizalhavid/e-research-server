@@ -3,10 +3,10 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from apps.notification.models import Notification
-from apps.pkm.models import PKMIdeaContribute, PKMIdeaContributeApplyTeam, PKMProgram
+from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMIdeaContributeApplyTeam, PKMProgram
 from apps.proposals.models import SubmissionsProposalApply
 from utils.send_notification import BaseNotification
-
+from django.contrib.contenttypes.models import ContentType
 from datetime import timedelta
 from django.utils import timezone
 
@@ -15,22 +15,30 @@ from django.utils import timezone
 @receiver(post_save, sender=PKMIdeaContribute)
 def pkm_idea_contribute_notification(sender, instance, created, **kwargs):
     
-    status_messages = {
-        PKMIdeaContribute.STATUS_CHOICES[0][0]: f"PKM Idea Contribute {instance.title} has been submitted",
-        PKMIdeaContribute.STATUS_CHOICES[1][0]: f"PKM Idea Contribute {instance.title} has been published",
-        PKMIdeaContribute.STATUS_CHOICES[3][0]: f"PKM Idea Contribute {instance.title} has been rejected",
+    status_messages_and_types = {
+        PKMIdeaContribute.STATUS_CHOICES[0][0]: ("PKM Idea Contribute {title} has been submitted", 'info'),
+        PKMIdeaContribute.STATUS_CHOICES[1][0]: ("PKM Idea Contribute {title} has been published", 'success'),
+        PKMIdeaContribute.STATUS_CHOICES[3][0]: ("PKM Idea Contribute {title} has been rejected", 'error'),
     }
 
     user = instance.user
-    message = status_messages[instance.status]
+    message, notif_type = status_messages_and_types[instance.status]
+    message = message.format(title=instance.title)
 
-    # BaseNotification(user, message).send_notification()
-    Notification.objects.create(user=user, message=message)
+    # Get ContentType for PKMIdeaContribute
+    content_type = ContentType.objects.get_for_model(instance)
+
+    Notification.objects.create(
+        user=user, 
+        message=message, 
+        type=notif_type,
+        content_type=content_type,
+        object_id=instance.id
+    )
+
+
 @shared_task
 def pkm_activity_schedule_notification():
-    from apps.pkm.models import PKMActivitySchedule
-    from datetime import timedelta, timezone
-
     # Send notifications 7 days (1 week) and 0 days (today) before the event
     for days in [0, 7]:
         upcoming_schedules = PKMActivitySchedule.objects.filter(
@@ -40,19 +48,24 @@ def pkm_activity_schedule_notification():
         for schedule in upcoming_schedules:
             if days == 0:
                 message = f"Activity Schedule {schedule.title} is starting today!"
+                notif_type = 'info'  # Example type for same-day notification
             else:
                 message = f"Activity Schedule {schedule.title} is starting in {days} days!"
+                notif_type = 'warning'  # Example type for upcoming notification
             program = schedule.program
 
-            # BaseNotification(program, message).send_notification()
-            Notification.objects.create(user=program.user, message=message)
+            # Get ContentType for PKMActivitySchedule
+            content_type = ContentType.objects.get_for_model(schedule)
 
-# signal pkm is ending : STUDENT
-@shared_task
+            Notification.objects.create(
+                user=program.user, 
+                message=message, 
+                type=notif_type,
+                content_type=content_type,
+                object_id=schedule.id
+            )
+
 def pkm_ending_notification():
-    from apps.pkm.models import PKMProgram
-    from datetime import timedelta, timezone
-
     # Send notifications 7 days (1 week) and 0 days (today) before the event
     for days in [0, 7]:
         ending_programs = PKMProgram.objects.filter(
@@ -62,42 +75,60 @@ def pkm_ending_notification():
         for program in ending_programs:
             if days == 0:
                 message = f"{program.name} is ending today!"
+                notif_type = 'info'  # Example type for same-day notification
             else:
                 message = f"{program.name} is ending in {days} days!"
+                notif_type = 'warning'  # Example type for upcoming notification
 
-            # BaseNotification(program, message).send_notification()
-            Notification.objects.create(user=program.user, message=message)
+            # Get ContentType for PKMProgram
+            content_type = ContentType.objects.get_for_model(program)
+
+            Notification.objects.create(
+                user=program.user, 
+                message=message, 
+                type=notif_type,
+                content_type=content_type,
+                object_id=program.id
+            )
+
 
 @shared_task
 def delete_notifications_after_program_end():
-  
+    from django.db.models import Q
+
     # Get programs that ended the day before yesterday
     ended_programs = PKMProgram.objects.filter(
         end_date__lt=timezone.now() - timedelta(days=1),
         end_date__gte=timezone.now() - timedelta(days=2),
     )
 
+    user_ids = set()
+
+    # Collect user IDs from leaders and members
     for program in ended_programs:
-        # Get the SubmissionProposalApply instances related to the program
-        submission_proposals = SubmissionsProposalApply.objects.filter(submission_proposal=program.submission_proposal)
+        submission_proposals = SubmissionsProposalApply.objects.filter(
+            submission_proposal=program.submission_proposal
+        ).select_related('team__leader').prefetch_related('team__members')
 
         for submission_proposal in submission_proposals:
-            # Delete all notifications for the leader of the team associated with the SubmissionProposalApply
-            Notification.objects.filter(user=submission_proposal.team.leader.user).delete()
+            user_ids.add(submission_proposal.team.leader.user_id)
+            user_ids.update(submission_proposal.team.members.values_list('user_id', flat=True))
 
-            # Delete all notifications for the members of the team associated with the SubmissionProposalApply
-            for member in submission_proposal.team.members.all():
-                Notification.objects.filter(user=member.user).delete()
+    # Bulk delete notifications for all collected user IDs
+    if user_ids:
+        Notification.objects.filter(user_id__in=user_ids).delete()
+
 
 
 # signal pkm idea contribution team status : STUDENT
 
+
 @receiver(post_save, sender=PKMIdeaContributeApplyTeam)
 def pkm_idea_contribute_team_notification(sender, instance, created, **kwargs):
     status_messages = {
-        PKMIdeaContributeApplyTeam.STATUS_CHOICES[0][0]: f"Your team application for Idea Contribute {instance.idea_contribute.title} has been submitted",
-        PKMIdeaContributeApplyTeam.STATUS_CHOICES[1][0]: f"Your team application for Idea Contribute {instance.idea_contribute.title} has been accepted",
-        PKMIdeaContributeApplyTeam.STATUS_CHOICES[2][0]: f"Your team application for Idea Contribute {instance.idea_contribute.title} has been rejected",
+        PKMIdeaContributeApplyTeam.STATUS_CHOICES[0][0]: ("Your team application for Idea Contribute {title} has been submitted", 'info'),
+        PKMIdeaContributeApplyTeam.STATUS_CHOICES[1][0]: ("Your team application for Idea Contribute {title} has been accepted", 'success'),
+        PKMIdeaContributeApplyTeam.STATUS_CHOICES[2][0]: ("Your team application for Idea Contribute {title} has been rejected", 'error'),
     }
 
     # Get the current time
@@ -117,16 +148,37 @@ def pkm_idea_contribute_team_notification(sender, instance, created, **kwargs):
             other_applications.update(status='R')
 
     user = instance.team.leader.user
-    message = status_messages[instance.status]
+    message, notif_type = status_messages[instance.status][0].format(title=instance.idea_contribute.title), status_messages[instance.status][1]
 
-    # BaseNotification(user, message).send_notification()
-    Notification.objects.filter(user=user).update(message=message)
+    # Get ContentType for PKMIdeaContributeApplyTeam
+    content_type = ContentType.objects.get_for_model(instance)
 
-# signal pkm idea contribution team to owner : OWNER
+    # Create a new notification with the type field, content_type, and object_id
+    Notification.objects.create(
+        user=user, 
+        message=message, 
+        type=notif_type,
+        content_type=content_type,
+        object_id=instance.id
+    )
+
+
 @receiver(post_save, sender=PKMIdeaContributeApplyTeam)
 def pkm_idea_contribute_team_owner_notification(sender, instance, created, **kwargs):
+    if created:
+        # Fetch the ContentType for PKMIdeaContributeApplyTeam
+        content_type = ContentType.objects.get_for_model(PKMIdeaContributeApplyTeam)
+        
+        # Create a Notification instance
+        Notification.objects.create(
+            user=instance.owner,
+            message=f"Your PKM Idea Contribute Apply Team '{instance.name}' has been created.",
+            content_type=content_type,
+            object_id=instance.id
+        )
     if created:  # only for newly created instances
         Notification.objects.create(
             user=instance.idea_contribute.user,
-            message=f"Team {instance.team.name} has applied to your idea {instance.idea_contribute.title}."
+            message=f"Team {instance.team.name} has applied to your idea {instance.idea_contribute.title}.",
+            type='info'  # Assuming 'info' is a valid type in your Notification model
         )

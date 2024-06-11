@@ -13,6 +13,7 @@ class TeamTaskFilter(filters.FilterSet):
 
 class TeamTaskFilter(filters.FilterSet):
     due_in_days = filters.NumberFilter(method='filter_by_due_date')
+    task_user = filters.CharFilter(method='filter_by_task_user')
 
     class Meta:
         model = TeamTask
@@ -32,6 +33,7 @@ class TeamTaskFilter(filters.FilterSet):
             ).order_by('created_at')[:5]
         return queryset
 
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.filters['due_time'].label = 'Due Time'

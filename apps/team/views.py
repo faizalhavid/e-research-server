@@ -3,11 +3,11 @@ from rest_framework import viewsets, permissions, filters, generics
 from apps.account.models import Student
 from apps.team.filters import TeamFilter, TeamTaskFilter
 from apps.team.models import Team, TeamApply, TeamTask, TeamVacancies
-from apps.team.serializers import TeamApplySerializer, TeamSerializer, TeamTaskSerializer, TeamVacanciesSerializer
+from apps.team.serializers import TeamApplySerializer, TeamSerializer, TeamTaskSerializer, TeamTaskUpdateStatusSerializer, TeamVacanciesSerializer
 from django.db.models import Q, Case, When, BooleanField
 from django_filters.rest_framework import DjangoFilterBackend
 from utils.exceptions import failure_response, failure_response_validation, success_response
-from utils.permissions import IsLeaderOrMembers, IsStudent
+from utils.permissions import IsLeaderOrMembers, IsStudent, IsTeamLeaderOrMember
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 
@@ -75,39 +75,48 @@ class TeamApplyViewSet(viewsets.ModelViewSet):
 
  
 
-
 class TeamTaskViewSet(viewsets.ModelViewSet):
+    """
+    A viewset that provides `retrieve`, `create`, `list`, `update`, and `destroy` actions.
+    """
     serializer_class = TeamTaskSerializer
     permission_classes = (permissions.IsAuthenticated, IsStudent)
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ['title', 'description']
     lookup_field = 'pk'
     filterset_class = TeamTaskFilter
+    # queryset = TeamTask.objects.all()
 
     def get_queryset(self):
-        user = self.request.user
-        team = self.kwargs.get('team_id')
-        if user.is_superuser:
-            return TeamTask.objects.filter(team=team)
+        """
+        Optionally restricts the returned tasks to a given team,
+        by filtering against a `team_id` query parameter in the URL.
+        """
 
-        student = Student.objects.filter(user=user).first()
-        if not student:
-            return TeamTask.objects.none()
-        
-        return TeamTask.objects.filter(team=team).filter(Q(team__leader=student) | Q(team__members=student))
+        team_slug = self.kwargs.get('team_slug')
+
+        if team_slug:
+            team = get_object_or_404(Team, slug=team_slug)
+            return TeamTask.objects.filter(team=team)
+        return TeamTask.objects.none()
     
     def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context['team_id'] = self.kwargs.get('team_id')
+        """
+        Pass 'team_slug' to serializer context.
+        """
+        context = super(TeamTaskViewSet, self).get_serializer_context()
+        context['team_slug'] = self.kwargs.get('team_slug')
         return context
+    
+
     
 class UserTeamTaskList(generics.ListAPIView):
     serializer_class = TeamTaskSerializer
     ordering = ['due_time']
     permission_classes = (permissions.IsAuthenticated, IsStudent)
-
-
     def get_queryset(self):
         user = self.request.user
+        if user.is_superuser:
+            return TeamTask.objects.all()
         student = Student.objects.filter(user=user).first()
         return TeamTask.objects.filter(Q(team__leader=student) | Q(team__members=student))

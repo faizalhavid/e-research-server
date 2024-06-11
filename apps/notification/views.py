@@ -1,15 +1,32 @@
 from rest_framework import viewsets,mixins
 
 from .models import Notification
-from .serializers import NotificationSerializer
+from .serializers import NotificationDetailSerializer, NotificationListSerializer
 
-class NotificationViewSet(viewsets.GenericViewSet,  mixins.UpdateModelMixin, mixins.ListModelMixin):
-    serializer_class = NotificationSerializer
+from rest_framework import viewsets, mixins
+
+class NotificationViewSet(viewsets.GenericViewSet, mixins.UpdateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin):
     ordering_fields = ['timestamp']
     search_fields = ['message']
     filterset_fields = ['read']
+    lookup_field = 'pk'
+
     def get_queryset(self):
-        return Notification.objects.filter(user=self.request.user)
+        user = self.request.user
+        if user.is_superuser:
+            return Notification.objects.all()
+        return Notification.objects.filter(user=user)
     
     def perform_update(self, serializer):
         serializer.save(read=True)
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return NotificationListSerializer
+        else:
+            return NotificationDetailSerializer
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.read = True
+        instance.save()
+        return super().retrieve(request, *args, **kwargs)

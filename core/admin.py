@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.utils import timezone
 from django.core.handlers.wsgi import WSGIRequest
@@ -20,6 +21,7 @@ from apps.pkm.form import *
 from apps.pkm.admin import *
 from apps.team.models import *
 from apps.team.admin import *
+
 
 
 
@@ -109,9 +111,23 @@ class EReasearchAdminSite(admin.AdminSite, AdminChartMixin):
             "datasets": datasets,
         }
         return super().index(request, extra_context)
-    
+
+
+
+# for debug
+# @admin.register(ContentType)
+# class ContentTypeAdmin(admin.ModelAdmin):
+#     list_display = ['id', 'app_label', 'model']
+#     search_fields = ['app_label', 'model']
+#     list_filter = ['app_label', 'model']
+#     list_per_page = 10
+#     list_max_show_all = 100
+#     list_select_related = True
+
 admin_site = EReasearchAdminSite(name='myadmin')
 
+
+# admin_site.register(ContentType, ContentTypeAdmin)
 admin_site.register(Group)
 admin_site.register(User, UserAdmin)
 admin_site.register(Student, StudentAdmin)

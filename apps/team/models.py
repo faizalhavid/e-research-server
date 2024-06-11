@@ -1,5 +1,6 @@
 import hashlib
 import os
+import uuid
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import ArrayField
@@ -35,7 +36,7 @@ class Team(models.Model):
         if not self.slug:
             self.slug = hashlib.sha256(self.name.encode()).hexdigest()[:20]
         super().save(*args, **kwargs)
-    
+
 
 
 
@@ -74,6 +75,7 @@ class TeamApply(models.Model):
         return self.vacanicies.name + ' - ' + self.user.firstname
     
 class TeamTask(models.Model):
+    uid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     team = models.ForeignKey(Team, related_name='agendas', on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     description = models.TextField()

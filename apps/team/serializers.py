@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.account.models import Lecturer, Student
+from apps.account.serializers import LecturerSerializer
 from apps.team.models import Team, TeamApply, TeamTask, TeamVacancies
 from utils.exceptions import failure_response_validation
 from taggit.serializers import (TagListSerializerField,
@@ -53,7 +54,7 @@ class TeamSerializer(serializers.ModelSerializer):
         if Team.objects.filter(lecturer=lecturer, status='ACTIVE').count() >= 10:
             raise failure_response_validation('The lecturer has reached the maximum number of teams')
 
-        if leader in members:
+        if any(member.user == user for member in members):
             raise failure_response_validation({'members': 'Leader cannot also be a member'})
     
         if any(Team.objects.filter(members=member).count() > 3 for member in members):
@@ -68,7 +69,7 @@ class TeamSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         response = super().to_representation(instance)
-
+        response['lecturer'] = LecturerSerializer(instance.lecturer).data
         response['leader'] = MemberSerializers(instance.leader).data
         response['members'] = MemberSerializers(instance.members.all(), many=True).data
         return response
@@ -117,17 +118,27 @@ class TeamTaskSerializer(serializers.ModelSerializer):
         
 
     def create(self, validated_data):
-        team_id = self.context['team_id']
-        team = Team.objects.get(id=team_id)
+        team_slug = self.context['team_slug']
+        team = Team.objects.get(slug=team_slug)
         task = TeamTask.objects.create(team=team, **validated_data)
         return task
     
     
     def validate(self, data):
-        print(self.context)
-        team_id = self.context['team_id']
-        team = Team.objects.get(id=team_id)
+        team_slug = self.context['team_slug']
+        team = Team.objects.get(slug=team_slug)
         
         if team.status != 'ACTIVE':
             raise failure_response_validation('Team is not active')
+        return data
+
+class TeamTaskUpdateStatusSerializer (serializers.ModelSerializer):
+    class Meta:
+        model = TeamTask
+        fields = ('completed',)
+        read_only_fields = ('id', 'team', 'title', 'description', 'created_at', 'updated_at')
+        
+    def validate(self, data):
+        if self.instance.status == 'DONE':
+            raise failure_response_validation('Task is already done')
         return data

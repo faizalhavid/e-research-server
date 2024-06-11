@@ -41,5 +41,5 @@ class TeamApplyAdmin(admin.ModelAdmin):
 @admin.register(TeamTask)
 class TeamTaskAdmin(admin.ModelAdmin):
     model = TeamTask
-    list_display = ('id', 'team', 'title', 'description')
+    list_display = ('uid', 'team', 'title', 'description')
     search_fields = ('team__name', 'title', 'description')

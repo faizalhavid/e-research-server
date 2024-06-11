@@ -40,7 +40,7 @@ router.register(r'proposals/submission-apply', SubmissionProposalApplyViewSet, b
 
 router.register(r'team/vacancies', TeamVacanciesViewSet, basename='team-vacancies')
 router.register(r'team/vacancies/apply', TeamApplyViewSet, basename='team-applications')
-router.register(r'team/(?P<team_id>\d+)/tasks', TeamTaskViewSet, basename='unique_teamtasks')
+router.register(r'team/(?P<team_slug>[-\w]+)/tasks', TeamTaskViewSet, basename='unique_teamtasks')
 router.register(r'team', TeamViewSet, basename='team')
 
 router.register(r'content-hub/notice', NoticeViewSet, basename='notice')
@@ -59,6 +59,7 @@ urlpatterns = [
     path('admin/', admin_site.urls),
     path('api/', include([
     path('', schema_view.with_ui('swagger', cache_timeout=0), name="schema-swagger-ui"),
+     path('team/user-team-task',UserTeamTaskList.as_view(), name='user-team-task-list'),
     path('', include(router.urls)),
     # AUTHENTICATION
     path('auth/', include([
@@ -76,7 +77,7 @@ urlpatterns = [
         path('tags', TagListView.as_view(), name='proposal-tag'),   
         path('pkm/idea-contribute-report' ,  IdeaContributeReportView.as_view(), name='idea-contribute-report'),
 
-        path('team/user-team-task',UserTeamTaskList.as_view(), name='user-team-task-list'),
+       
 
 
     ])),
