@@ -27,16 +27,17 @@ jobs:
       run: |
         docker stop e-research-container || true
         docker rm e-research-container || true
-      - name: 'Create env file'
-        run: |
-          touch .env
-          echo DEBUG=True >> .env
-          echo DJANGO_SECRET_KEY={{ secrets.DJANGO_SECRET_KEY }} >> .
-          echo BASE_URL={{ secrets.BASE_URL }} >> .env
-          echo AWS_ACCESS_KEY_ID={{ secrets.AWS_ACCESS_KEY_ID }} >> .env
-          echo AWS_SECRET_ACCESS_KEY={{ secrets.AWS_SECRET_ACCESS_KEY }} >> .env
-          echo AWS_STORAGE_BUCKET_NAME={{ secrets.AWS_STORAGE_BUCKET_NAME }} >> .env
-          echo SSL_CERTIFICATE={{ secrets.SSL_CERTIFICATE }} >> .env
+        
+    - name: 'Create env file'
+      run: |
+        touch .env
+        echo DEBUG=True >> .env
+        echo DJANGO_SECRET_KEY={{ secrets.DJANGO_SECRET_KEY }} >> .
+        echo BASE_URL={{ secrets.BASE_URL }} >> .env
+        echo AWS_ACCESS_KEY_ID={{ secrets.AWS_ACCESS_KEY_ID }} >> .env
+        echo AWS_SECRET_ACCESS_KEY={{ secrets.AWS_SECRET_ACCESS_KEY }} >> .env
+        echo AWS_STORAGE_BUCKET_NAME={{ secrets.AWS_STORAGE_BUCKET_NAME }} >> .env
+        echo SSL_CERTIFICATE={{ secrets.SSL_CERTIFICATE }} >> .env
       
     - name: Build and push Docker image
       uses: docker/build-push-action@v2
