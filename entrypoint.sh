@@ -1,21 +1,15 @@
 #!/bin/sh
 
-# Exit immediately if a command exits with a non-zero status.
-set -e
-
-# Wait for the database to be ready
+# Wait for the PostgreSQL server to be available
 echo "Waiting for PostgreSQL to start..."
-# Simple loop to wait for the DB to be ready
-while ! nc -z "$DB_HOST" "$DB_PORT"; do
+while ! nc -z db 5432; do
     sleep 0.1
 done
 echo "PostgreSQL started"
 
-# Apply database migrations
-echo "Applying database migrations..."
-python manage.py makemigrations
+# Apply Django migrations
+echo "Applying Django migrations..."
 python manage.py migrate
 
-# Start server
-echo "Starting server..."
+# Start your Django application
 exec "$@"
