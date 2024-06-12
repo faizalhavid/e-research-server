@@ -260,7 +260,7 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # SESSION AND CSRF COOKIE
 SESSION_COOKIE_SECURE = True  
-CSRF_COOKIE_SECURE = True 
+CSRF_COOKIE_SECURE = False
 SECURE_HSTS_SECONDS = 31536000  # Contoh: HSTS aktif selama 1 tahun (31536000 detik)
 CSRF_TRUSTED_ORIGINS = ['https://localhost', 'http://localhost', 'https://e-research-be3e0f7d5e0d.nevacloud.io','http://e-research-be3e0f7d5e0d.nevacloud.io']
 # OTHER SETTINGS
