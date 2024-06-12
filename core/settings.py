@@ -35,7 +35,6 @@ DJANGO_ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'jazzmin',
     'django.contrib.admin',
-    # 'daphne',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -43,7 +42,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Third party apps
-    'channels',
     'admincharts',
     'import_export',
     'rest_framework',
@@ -60,10 +58,10 @@ INSTALLED_APPS = [
 
     'apps.account',
     'apps.proposals',
-    'apps.pkm',
-    'apps.team',
     'apps.notification',
+    'apps.team',
     'apps.content_hub',
+    'apps.pkm',
 
 
 ]

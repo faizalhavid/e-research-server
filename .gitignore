@@ -5,7 +5,7 @@ __pycache__/
 __pycache__/*
 core.egg-info
 core.egg-info/
-venv
+.venv
 .vscode
 
 staticfiles
