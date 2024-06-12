@@ -262,6 +262,7 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 SESSION_COOKIE_SECURE = True  
 CSRF_COOKIE_SECURE = True 
 SECURE_HSTS_SECONDS = 31536000  # Contoh: HSTS aktif selama 1 tahun (31536000 detik)
+CSRF_TRUSTED_ORIGINS = ['localhost', 'e-research-be3e0f7d5e0d.nevacloud.io']
 # OTHER SETTINGS
 ASGI_APPLICATION = 'core.asgi.application'
 X_FRAME_OPTIONS = 'SAMEORIGIN'
