@@ -1,5 +1,6 @@
 # In a file named `factories.py` in your Django app's directory
 
+import random
 import factory
 from faker import Faker
 from django.contrib.auth.models import Group
@@ -34,6 +35,34 @@ groups_data = [
     'Lecturer',
     'LecturerReviewer',
     'Admin'
+]
+
+key_penilaian_1 =[
+'Kesalahan Ketidaksesuaian Isi Proposal Dengan Bidang Yang Diusulkan (Salah Bidang PKM) Kesalahan Judul (Akronim, Singkatan Tidak Baku atau Lebih Dari 20 Kata pada proposal)',
+'Kesalahan Sampul (Terdapat Halaman Sampul/Cover)',
+'Kesalahan Pengesahan (Terdapat Halaman Pengesahan)',
+'Kesalahan Ukuran Kertas (Bukan A4)',
+'Kesalahan Format Paragraf (Tidak Satu Kolom)',
+'Kesalahan Font (Tidak Times New Roman, Ukuran 12)',
+'Kesalahan Margin (Kiri Tidak 4cm, Atas, Kanan, Bawah Tidak 3cm)',
+'Kesalahan Perataan Teks (Teks Paragraf Tidak Rata Kanan-Kiri)',
+'Kesalahan Spasi (Teks Paragraf Tidak 1,15)',
+'Kesalahan Abstrak',
+'Terdapat Ringkasan',
+'Kesalahan Sistematika Penulisan PKM',
+'Kesalahan Nomor Halaman',
+'Kesalahan Letak Nomor Halaman',
+'Kesalahan Ketidaksesuaian Luaran Wajib (tidak harus urut) di Profil atau di proposal',
+'Kesalahan Format Rekapitulasi Rencana Anggaran Biaya',
+'Kesalahan Nominal Pengajuan Anggaran ke Dit. APTV/Belmawa (wajib min 6 jt dan maks 10 jt) Kesalahan Nominal Dana Pendamping Perguruan Tinggi (Min 500.000 dan Maks 2.000.000)',
+'Kesalahan Format Jadwal Kegiatan (tidak Sesuai Lampiran 1 Buku Panduan)',
+'Kesalahan Waktu Pelaksanaan (Tidak 3-4 Bulan)',
+'Kesalahan Jumlah Halaman',
+'Kesalahan Daftar Pustaka (Tidak Harvard Style, Urut Abjad, dan Menguraikan Nama Penulis)',
+'Kesalahan Ketidaksesuaian Kelengkapan Dokumen dan Lampiran',
+'Kesalahan Ketidaksesuaian Kriteria Keilmuan Bidang PKM atau Jumlah Anggota tidak Sesuai',
+'Kesalahan Tanggal / Bulan / Tahun (Tidak antara 9 Februari - 10 Maret 2024)',
+'Kesalahan Tanda Tangan (Pengusul / Pendamping / Mitra) Cropping Lokal Kesalahan Surat Pernyataan Ketua Tim Pengusul',
 ]
 
 
@@ -74,40 +103,15 @@ class MajorFactory(factory.django.DjangoModelFactory):
         model = Major
         django_get_or_create = ('name', 'department')
 
-    @factory.lazy_attribute
-    def name(self):
-        # This will be set in _generate
-        pass
+    # Removed the name attribute's previous method of generating names.
 
-    @factory.lazy_attribute
-    def department(self):
-        # This will be set in _generate
-        pass
+    department = factory.SubFactory(DepartmentFactory)
 
     @classmethod
-    def _generate(cls, strategy, params):
-        # Temporarily remove name and department to avoid errors in super()._generate
-        name = params.pop('name', None)
-        department = params.pop('department', None)
-
-        # Generate the Major instance
-        major = super()._generate(strategy, params)
-
-        # Set the name and department correctly
-        if name and department:
-            major.name = name
-            major.department = department
-            major.save()
-
-        return major
-
-    @classmethod
-    def create_batch(cls, size, **kwargs):
+    def create_batch(cls, **kwargs):
         for dept_name, majors in departement_major_data.items():
             department, _ = Departement.objects.get_or_create(name=dept_name)
-            # Limit the number of majors to create per department based on `size`
-            limited_majors = majors[:size]
-            for major_name in limited_majors:
+            for major_name in majors:
                 cls.create(name=major_name, department=department)
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -135,7 +139,7 @@ class UserFactory(factory.django.DjangoModelFactory):
         # Bypass password validation by providing raw password
         return manager.create_user(*args, **kwargs, password='password')
     
-    password = factory.PostGenerationMethodCall('set_password', 'password')
+    password = factory.PostGenerationMethodCall('set_password', '12345678ok')
 
 class StudentFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -144,9 +148,21 @@ class StudentFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     full_name = factory.LazyAttribute(lambda _: fake.name())
     nrp = factory.LazyAttribute(lambda _: fake.random_number(digits=12))
-    department = factory.SubFactory(DepartmentFactory)
+    
+    department = factory.LazyAttribute(
+        lambda _: Departement.objects.get_or_create(
+            name=random.choice(list(departement_major_data.keys()))
+        )[0]
+    )
+    
+    # Use a LazyAttribute to select a random major based on the department and create/get it
+    major = factory.LazyAttribute(
+        lambda o: Major.objects.get_or_create(
+            name=random.choice(departement_major_data[o.department.name]),
+            department=o.department
+        )[0]
+    )
     degree = factory.LazyAttribute(lambda _: fake.random_element(elements=(Student.DEGREE_CHOICES))[0])
-    major = factory.SubFactory(MajorFactory)
     admission_year = factory.LazyAttribute(lambda _: fake.random_int(min=2019, max=2024))
     
 class LecturerFactory(factory.django.DjangoModelFactory):
@@ -156,8 +172,13 @@ class LecturerFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     full_name = factory.LazyAttribute(lambda _: fake.name())
     nidn = factory.LazyAttribute(lambda _: fake.random_number(digits=18))
-    department = factory.SubFactory(DepartmentFactory)
-
+    
+    # Select a random department from departement_major_data
+    department = factory.LazyAttribute(
+        lambda _: Departement.objects.get_or_create(
+            name=random.choice(list(departement_major_data.keys()))
+        )[0]
+    )
 
 class TeamFactory(factory.django.DjangoModelFactory):
     class Meta:

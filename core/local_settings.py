@@ -2,7 +2,7 @@ DATABASES = {
     # server
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'eresarchdb',
+        'NAME': 'e_research_db',
         'USER': 'postgres',
         'PASSWORD': '220702',
         'HOST': '103.161.184.106',

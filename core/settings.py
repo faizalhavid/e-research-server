@@ -57,12 +57,12 @@ INSTALLED_APPS = [
 
     # Local apps
 
+    'apps.pkm',  
     'apps.account',
     'apps.proposals',
     'apps.notification',
     'apps.team',
-    'apps.content_hub',
-    'apps.pkm',
+    'apps.content_hub'
 
 
 ]
