@@ -7,3 +7,10 @@ def get_item(list, index):
         return list[index]
     else:
         return None
+    
+@register.filter(name='get_tuple_item')
+def get_tuple_item(value, arg):
+    try:
+        return value[arg]
+    except (IndexError, TypeError):
+        return None

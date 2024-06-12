@@ -86,7 +86,7 @@ class UserProfile(models.Model):
     
 class Departement(models.Model):
     name = models.CharField(max_length=50, blank=True, default='')
-    abbreviation = models.CharField(max_length=10, blank=True, default='')
+    abbreviation = models.CharField(max_length=10, blank=True, default='', verbose_name='Singkatan')
     def __str__(self):
         return self.name
     def save(self, *args, **kwargs):
