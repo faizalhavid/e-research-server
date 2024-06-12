@@ -23,10 +23,8 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Stop and remove previous Docker container
-      run: |
-        docker stop e-research-container || true
-        docker rm e-research-container || true
+    - name: Create Docker network
+      run: docker network create e-research-network || true
 
     - name: 'Create env file'
       run: |
@@ -54,15 +52,18 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}  
         script: |
-          # Stop and remove any existing container with the name "e-research-container"
+          # Ensure the network exists
+          docker network create e-research-network || true
+          
+          # Stop and remove any existing container
           docker stop e-research-container || true
           docker rm e-research-container || true
           
           # Pull the latest image
           docker pull nurhavid1/e-research-server:latest
           
-          # Run the new container
-          docker run -d --name e-research-container \
+          # Run the new container attached to the network
+          docker run -d --name e-research-container --network e-research-network \
             -e DB_HOST=103.161.184.106 \
             -e DB_PORT=5432 \
             -e DB_NAME=eresearchdb \
