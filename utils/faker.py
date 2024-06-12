@@ -9,7 +9,7 @@ from django.utils import timezone
 from apps.account.models import Departement, Lecturer, Major, Student, User
 from apps.pkm.admin import PKMActivity
 from apps.pkm.models import PKMIdeaContribute, PKMProgram, PKMScheme
-from apps.proposals.models import SubmissionProposal, SubmissionsProposalApply
+from apps.proposals.models import KeyStageAssesment1, SubmissionProposal, SubmissionsProposalApply
 from apps.team.models import Team, TeamVacancies
 
 fake = Faker()
@@ -65,6 +65,12 @@ key_penilaian_1 =[
 'Kesalahan Tanda Tangan (Pengusul / Pendamping / Mitra) Cropping Lokal Kesalahan Surat Pernyataan Ketua Tim Pengusul',
 ]
 
+
+class KeyStageAssesment1Factory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = KeyStageAssesment1
+
+    title = factory.LazyAttribute(lambda x: x.title)
 
 class SuperUserFactory(factory.django.DjangoModelFactory):
     class Meta:

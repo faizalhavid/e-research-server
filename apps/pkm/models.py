@@ -6,7 +6,6 @@ from taggit.managers import TaggableManager
 from django.contrib.postgres.fields import ArrayField
 
 class PKMProgram(models.Model):
-    name = models.CharField(max_length=50, blank=True)
     period = models.IntegerField()
     due_date = models.DateTimeField()
     scheme = models.ManyToManyField('pkm.PKMScheme', related_name='programs')
@@ -15,13 +14,8 @@ class PKMProgram(models.Model):
         verbose_name = 'Program PKM'
         verbose_name_plural = 'Program PKM'
 
-    def save(self, *args, **kwargs):
-        if not self.name:
-            self.name = f"PKM {self.period}"
-        super().save(*args, **kwargs)
-
     def __str__(self):
-        return self.name 
+        return f"PKM {self.period}"
     
 class PKMActivitySchedule(models.Model):
     program = models.ForeignKey('pkm.PKMProgram', related_name='activity_schedules', on_delete=models.CASCADE)

@@ -1,9 +1,8 @@
+from django import forms
 from django.contrib import admin
-from django.forms import BaseInlineFormSet, model_to_dict
+from django.forms import BaseInlineFormSet, ModelForm, model_to_dict
 from apps.account.models import Lecturer
 from django.utils.html import format_html
-
-from apps.proposals.form import StageAssesment1Form, StageAssesment1InlineFormSet, StageAssesment2Form
 from apps.proposals.models import *
 
 
@@ -22,6 +21,11 @@ class LecturerTeamSubmissionApplyAdmin(admin.ModelAdmin):
         return ", ".join(submission_info)
     submission_information.short_description = 'Teams for reviewer'
 
+class SubmissionProposalApplyForm(ModelForm):
+    class Meta:
+        model= SubmissionsProposalApply
+        exclude = ('slug',)
+
 @admin.register(SubmissionsProposalApply)
 class SubmissionsProposalApplyAdmin(admin.ModelAdmin):
     model = SubmissionsProposalApply
@@ -32,15 +36,30 @@ class SubmissionsProposalApplyAdmin(admin.ModelAdmin):
 
     def submission_information(self, obj):
         return f"{obj.team.name} - {obj.title}"
-
+    
 @admin.register(SubmissionProposal)
 class SubmissionsProposalAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'status', 'program_name')
-    search_fields = ('title', 'status', 'program__name')  
-    list_filter = ('status', 'program__name') 
+    list_display = ('id', 'title', 'status', 'get_program_period')
+    search_fields = ('title', 'status', 'program__period')  
+    list_filter = ('status', 'program__period') 
+
+    fieldsets = [
+        ('Submissions Information', {
+            'fields': ('title', 'description', 'status', 'program', 'due_time'),
+        }),
+        ('Advanced Informations', {
+            'classes': ('collapse',),
+            'fields': ('additional_file',), 
+        }),
+    ]
+    
+
+    def get_program_period(self, obj):
+        return obj.program.period
+    get_program_period.short_description = 'Program Period'  # Optional: Sets column header
 
     def program_name(self, obj):
-        return obj.program.name
+        return obj.program.title
     program_name.short_description = 'Program'
 
 
@@ -67,28 +86,23 @@ class KeyStageAssesment2Admin(admin.ModelAdmin):
     list_display = ('id', 'title')
 
 
-class PrePopulatedFormSet(BaseInlineFormSet):
-    def get_initial(self):
-        initial = super().get_initial()
-        if self.queryset.exists():
-            initial.extend(model_to_dict(instance) for instance in self.queryset)
-        return initial
 
-    def get_queryset(self):
-        if not hasattr(self, '_queryset'):
-            criteria = {}  # Your criteria here
-            qs = super().get_queryset().filter(**criteria)
-            self._queryset = qs
-        return self._queryset
+
+    class Meta:
+        model = StageAssesment1
+        fields = '__all__'
+
+
 
 class StageAssesment1Inline(admin.TabularInline):
     model = StageAssesment1
-    formset = PrePopulatedFormSet
+    extra = 1
+
     
 
 class StageAssesment2Inline(admin.TabularInline):
     model = StageAssesment2
-    formset = PrePopulatedFormSet
+    extra = 1
     
 
 @admin.register(AssesmentSubmissionsProposal)
@@ -110,7 +124,9 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
 
     def render_change_form(self, request, context, *args, **kwargs):
         obj = kwargs.get('obj')
-        proposal = obj.submission_apply.team.proposals.first() if obj else None
+        print(obj)
+        print(obj.submission_apply.proposal)  # This will print the proposal to the console
+        proposal = obj.submission_apply.proposal if obj else None
         
         context.update({
             'request': request,
@@ -119,11 +135,9 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
         return super().render_change_form(request, context, *args, **kwargs)
     
     def proposal_file_url(self, obj):
-        proposal = obj.submission_apply.team.proposals.first()
-        print(f'Proposal: {proposal}')  # This will print the proposal to the console
-        if proposal and proposal.file:
-            print(f'File: {proposal.file}')  # This will print the file to the console
-            return proposal.file
+        proposal = obj.submission_apply.proposal
+        if proposal and proposal.url:
+            return format_html('<a href="{}" target="_blank" style="display: inline-block; padding: 6px 12px; background-color: #007bff; color: white; text-align: center; text-decoration: none; border-radius: 4px;">Download</a>', proposal.url)
         else:
             return 'No file'
 
@@ -136,11 +150,13 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
 
     def submission_information(self, obj):
         submission = obj.submission_apply
+        print(submission)
         team = submission.team
-        proposal = team.proposals.first()
+        proposal = submission.title
         if proposal is None:  # Check if proposal is not None
             return f"No proposal - {team}"
-        return f"{proposal.title} - {team}"
+        return f"{proposal} - {team.leader.full_name}  ({team.name})"
+    submission_information.short_description = 'Judul Proposal - Ketua Team'
     
     def status_colored(self, obj):
         color = 'red' if obj.submission_apply.status == 'Rejected' else 'green'

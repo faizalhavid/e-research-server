@@ -74,10 +74,10 @@ def pkm_ending_notification():
         )
         for program in ending_programs:
             if days == 0:
-                message = f"{program.name} is ending today!"
+                message = f"PKM{program.period} is ending today!"
                 notif_type = 'info'  # Example type for same-day notification
             else:
-                message = f"{program.name} is ending in {days} days!"
+                message = f"PKM{program.period} is ending in {days} days!"
                 notif_type = 'warning'  # Example type for upcoming notification
 
             # Get ContentType for PKMProgram

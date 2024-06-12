@@ -21,11 +21,11 @@ class SubmissionProposal(models.Model):
         ('BATCH 3', 'Batch 3'),
         ('REVISION', 'Revision'),
     ]
-    title=models.CharField(max_length=200)
+    title = models.CharField(max_length=10, choices=BATCH_CHOICES, default='BATCH 1', verbose_name='Batch')
     description=models.TextField( blank=True, default='')
     created_at=models.DateTimeField(auto_now_add=True)
     due_time = models.DateTimeField()
-    addional_file = models.FileField(upload_to=UploadToPathAndRename(os.path.join('proposals', 'submission_proposal/file')), blank=True, null=True)
+    additional_file = models.FileField(upload_to=UploadToPathAndRename(os.path.join('proposals', 'submission_proposal/additional_file')), blank=True, null=True)
     slug = models.SlugField(unique=True, blank=True, null=True)
     STATUS = (
         ('ARCHIVED', 'Archived'),
@@ -35,9 +35,10 @@ class SubmissionProposal(models.Model):
 
     class Meta:
         verbose_name_plural = '1. Submission Proposal'
+        
 
     def __str__(self):
-        return f"{self.title} - {self.program.name}"
+        return f"{self.title} - {self.program.period}"
     
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -107,7 +108,7 @@ class KeyStageAssesment2(models.Model):
         return f"{self.title} - {self.presentase}%"
     
 class KeyStageAssesment1(models.Model):
-    title = models.CharField(max_length=100)
+    title = models.TextField(max_length=180)
     description = models.TextField(blank=True, default='')
     
     class Meta:
@@ -154,8 +155,7 @@ class AssesmentSubmissionsProposal(models.Model):
 class StageAssesment1(models.Model):
     key_assesment = models.ForeignKey(KeyStageAssesment1, related_name='assessment_values_1', on_delete=models.CASCADE)
     assesment = models.ForeignKey(AssesmentSubmissionsProposal, related_name='assessment_values_1', on_delete=models.CASCADE)
-    status = models.BooleanField(default=False)
-    
+    # status = models.BooleanField(default=False)  # This field is being removed.
 
     class Meta:
         unique_together = ('key_assesment', 'assesment',)
@@ -165,12 +165,14 @@ class StageAssesment1(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)  
         self.assesment.refresh_from_db()
-        if any(sa.status for sa in self.assesment.assessment_values_1.all()):
+        # Since 'status' field is removed, we adjust the logic to check for any StageAssesment1 records.
+        # Assuming the existence of any StageAssesment1 records should trigger changing the submission_apply.status.
+        if self.assesment.assessment_values_1.exists():
             self.assesment.submission_apply.status = SubmissionsProposalApply.STATUS[3][0]
-        self.assesment.submission_apply.save()
+            self.assesment.submission_apply.save()
 
     def __str__(self):
-        return f"{self.key_assesment.title} - {self.status}"
+        return f"{self.key_assesment.title} - {self.assesment.submission_apply.team.name}"
 class StageAssesment2(models.Model):
     key_assesment = models.ForeignKey(KeyStageAssesment2, related_name='assessment_values_2', on_delete=models.CASCADE)
     assesment = models.ForeignKey(AssesmentSubmissionsProposal, related_name='assessment_values_2', on_delete=models.CASCADE)

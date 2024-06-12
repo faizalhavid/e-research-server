@@ -15,8 +15,8 @@ class SubmissionProposalInline(admin.TabularInline):
 @admin.register(PKMProgram)
 class PKMProgramAdmin(admin.ModelAdmin):
     model = PKMProgram
-    list_display = ('id', 'name')
-    search_fields = ('name',)
+    list_display = ('id', 'period')
+    search_fields = ('period',)
     inlines = [SubmissionProposalInline]
 
 @admin.register(PKMActivitySchedule)

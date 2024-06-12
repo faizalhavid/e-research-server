@@ -1,15 +1,21 @@
 from django.contrib import admin
+from django.forms import ModelForm
 from apps.account.models import Student
 from apps.proposals.models import SubmissionsProposalApply
 from apps.team.models import Team, TeamApply, TeamTask, TeamVacancies
 
+
+class TeamAdminForm(ModelForm):
+    class Meta:
+        model = Team
+        exclude = ('slug',)  
+
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    model = Team
+    form = TeamAdminForm
     list_display = ('name', 'description', 'leader', 'lecturer', 'status', 'created_at', 'updated_at', 'submission_information')
     search_fields = ('name', 'description', 'leader__user__username', 'lecturer__user__username', 'status')
     list_filter = ('status', 'created_at', 'updated_at')
-    raw_id_fields = ('leader', 'lecturer')
     filter_horizontal = ('members',)
 
     def submission_information(self, obj):
