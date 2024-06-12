@@ -63,10 +63,4 @@ jobs:
           docker pull nurhavid1/e-research-server:latest
           
           # Run the new container attached to the network
-          docker run -d --name e-research-container --network e-research-network \
-            -e DB_HOST=103.161.184.106 \
-            -e DB_PORT=5432 \
-            -e DB_NAME=eresearchdb \
-            -e DB_USER=postgres \
-            -e DB_PASSWORD=220702 \
-            nurhavid1/e-research-server:latest
+          docker run -d --name e-research-container --network e-research-network nurhavid1/e-research-server:latest
