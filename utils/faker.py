@@ -74,14 +74,41 @@ class MajorFactory(factory.django.DjangoModelFactory):
         model = Major
         django_get_or_create = ('name', 'department')
 
-    name = factory.Iterator([
-        major for majors in departement_major_data.values() for major in majors
-    ])
-    department = factory.Iterator([
-        Departement.objects.get_or_create(name=dept_name)[0]
-        for dept_name, majors in departement_major_data.items()
-        for _ in majors  # Repeat department for each major
-    ])
+    @factory.lazy_attribute
+    def name(self):
+        # This will be set in _generate
+        pass
+
+    @factory.lazy_attribute
+    def department(self):
+        # This will be set in _generate
+        pass
+
+    @classmethod
+    def _generate(cls, strategy, params):
+        # Temporarily remove name and department to avoid errors in super()._generate
+        name = params.pop('name', None)
+        department = params.pop('department', None)
+
+        # Generate the Major instance
+        major = super()._generate(strategy, params)
+
+        # Set the name and department correctly
+        if name and department:
+            major.name = name
+            major.department = department
+            major.save()
+
+        return major
+
+    @classmethod
+    def create_batch(cls, size, **kwargs):
+        for dept_name, majors in departement_major_data.items():
+            department, _ = Departement.objects.get_or_create(name=dept_name)
+            # Limit the number of majors to create per department based on `size`
+            limited_majors = majors[:size]
+            for major_name in limited_majors:
+                cls.create(name=major_name, department=department)
 
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
