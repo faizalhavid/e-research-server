@@ -24,6 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('DJANGO_SECRET_KEY')
 DEBUG = config('DEBUG', default='TRUE', cast=bool)
+DEBUG = True
 BASE_URL = config('BASE_URL', default='http://localhost:8000')
 
 ALLOWED_HOSTS = ['*']
@@ -254,8 +255,8 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 
 # SSL
-SECURE_SSL_REDIRECT = True
-SECURE_SSL_CERTIFICATE = config('SSL_CERTIFICATE')
+# SECURE_SSL_REDIRECT = True
+# SECURE_SSL_CERTIFICATE = config('SSL_CERTIFICATE')
 
 # SESSION AND CSRF COOKIE
 SESSION_COOKIE_SECURE = True  
