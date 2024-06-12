@@ -27,12 +27,6 @@ categories_data = [
 ]
 
 
-departement_major_data = {
-    'Departement Teknik Elektro': ['Teknik Elektronika', 'Telekomunikasi', 'Elektro Industri', 'Teknologi Rekaya Internet'],
-    'Departement Teknik Informatika Dan Komputer': ['Teknik Informatika', 'Teknik Komputer', 'Data Science'],
-    'Departement Teknik Mekanika Dan Energi': ['Teknik Mekatronika', 'Sistem Pembangkit Energi'],
-    'Departement Teknologi Multimedia Kreatif': ['Teknologi Multimedia Broadcasting', 'Teknologi Game', 'Teknologi Rekayasa Multimedia']
-}
 
 groups_data = [
     'Guest',
@@ -60,6 +54,13 @@ class GroupFactory(factory.django.DjangoModelFactory):
 
     name = factory.Iterator(groups_data)
 
+
+departement_major_data = {
+    'Departement Teknik Elektro': ['Teknik Elektronika', 'Telekomunikasi', 'Elektro Industri', 'Teknologi Rekaya Internet'],
+    'Departement Teknik Informatika Dan Komputer': ['Teknik Informatika', 'Teknik Komputer', 'Data Science'],
+    'Departement Teknik Mekanika Dan Energi': ['Teknik Mekatronika', 'Sistem Pembangkit Energi'],
+    'Departement Teknologi Multimedia Kreatif': ['Teknologi Multimedia Broadcasting', 'Teknologi Game', 'Teknologi Rekayasa Multimedia']
+}
 
 class DepartmentFactory(factory.django.DjangoModelFactory):
     class Meta:
