@@ -9,6 +9,7 @@ from django.db.models.signals import m2m_changed
 
 from utils.exceptions import failure_response_validation
 from utils.handle_file_upload import UploadToPathAndRename
+from django.db.models.signals import post_save
 
 
 
@@ -97,7 +98,7 @@ class SubmissionsProposalApply(models.Model):
 class KeyStageAssesment2(models.Model):
     title = models.CharField(max_length=100,unique=True)
     description = models.TextField(blank=True, default='')
-    presentase = models.DecimalField(max_digits=5, decimal_places=2)
+    presentase = models.DecimalField(max_digits=5, decimal_places=2,verbose_name='Bobot')
     category = models.ManyToManyField('pkm.PKMScheme', related_name='key_assesments')
     
     class Meta:
@@ -105,7 +106,9 @@ class KeyStageAssesment2(models.Model):
         verbose_name_plural = 'Parameter Penilaian Tahap 2'
     
     def __str__(self):
-        return f"{self.title}- {self.presentase}%"
+        # Convert to integer if no decimal part, else keep as decimal
+        percentage_value = int(self.presentase) if self.presentase == self.presentase.to_integral() else self.presentase
+        return f"{self.title} - {percentage_value}%"
     
 class KeyStageAssesment1(models.Model):
     title = models.TextField(max_length=180)
@@ -121,37 +124,16 @@ class KeyStageAssesment1(models.Model):
 class LecturerTeamSubmissionApply(models.Model):
     lecturer = models.ForeignKey('account.Lecturer', related_name='team_submission_apply', on_delete=models.CASCADE)
     submission_apply = models.ManyToManyField(SubmissionsProposalApply, related_name='lecturers')
-
     
     class Meta:
         
         verbose_name = '3. Plot Team Mahasiswa - Reviewer'
         verbose_name_plural = '3. Plot Team Mahasiswa - Reviewer'
         
-# class LecturerSubmissionApply(models.Model):
-#     lecturer = models.ForeignKey('account.Lecturer', on_delete=models.CASCADE)
-#     submission_apply = models.ForeignKey('SubmissionsProposalApply', on_delete=models.CASCADE)
-#     lecturer_team_submission_apply = models.ForeignKey('LecturerTeamSubmissionApply', on_delete=models.CASCADE)
-
-#     class Meta:
-#         unique_together = ('lecturer', 'submission_apply', 'lecturer_team_submission_apply',)
-#         verbose_name = 'Lecturer Submission Apply'
-#         verbose_name_plural = 'Lecturer Submissions Apply'
-
-
-# class LecturerTeamSubmissionApply(models.Model):
-#     lecturer = models.ForeignKey('account.Lecturer', related_name='team_submission_apply', on_delete=models.CASCADE)
-#     submission_apply = models.ManyToManyField('SubmissionsProposalApply', through='LecturerSubmissionApply', related_name='lecturers')
-
-#     class Meta:
-#         verbose_name = '3. Plot Team Mahasiswa - Reviewer'
-#         verbose_name_plural = '3. Plot Team Mahasiswa - Reviewer'
-
             
 class AssesmentSubmissionsProposal(models.Model):
     submission_apply = models.ForeignKey('proposals.SubmissionsProposalApply', related_name='assesments', on_delete=models.CASCADE)
     reviewer = models.ForeignKey('account.Lecturer', related_name='assesments', on_delete=models.CASCADE)
-    comment = models.TextField(blank=True, default='')
     reviewed_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -165,12 +147,8 @@ class AssesmentSubmissionsProposal(models.Model):
         if not (self.reviewer.user.groups.filter(name='Lecturer').exists() and self.reviewer.user.groups.filter(name='LecturerReviewer').exists()):
             raise ValidationError('Reviewer must be in the Lecturer and LecturerReviewer groups.')
 
-            
+
         super().clean()
-    
-
-# pivot table and stagging assesment
-
 class StageAssesment1(models.Model):
     key_assesment = models.ForeignKey(KeyStageAssesment1, related_name='assessment_values_1', on_delete=models.CASCADE)
     assesment = models.ForeignKey(AssesmentSubmissionsProposal, related_name='assessment_values_1', on_delete=models.CASCADE)
@@ -195,21 +173,22 @@ class StageAssesment1(models.Model):
 class StageAssesment2(models.Model):
     key_assesment = models.ForeignKey(KeyStageAssesment2, related_name='assessment_values_2', on_delete=models.CASCADE)
     assesment = models.ForeignKey(AssesmentSubmissionsProposal, related_name='assessment_values_2', on_delete=models.CASCADE)
+
     SCORE_CHOICES = [
     (1, '1'),
     (2, '2'),
     (3, '3'),
-    (4, '4'),
     (5, '5'),
     (6, '6'),
     (7, '7'),
     ]
     score = models.IntegerField(choices=SCORE_CHOICES)
+    
 
     def create(self, *args, **kwargs):
         scores = [sa.score for sa in self.assesment.assessment_values_2.all()]
         
-        if any(score < 2 for score in scores):
+        if any(score < 1 for score in scores):
             self.assesment.submission_apply.status = SubmissionsProposalApply.STATUS[3][0]
         elif any(score < 5 for score in scores):
             self.assesment.submission_apply.status = SubmissionsProposalApply.STATUS[4][0]
@@ -222,10 +201,38 @@ class StageAssesment2(models.Model):
 
     def __str__(self):
         return f"{self.assesment.submission_apply.submission.title} - {self.key_assesment.title}: {self.score}"
+class AssesmentReport(models.Model):
+    assesment = models.ForeignKey(AssesmentSubmissionsProposal, related_name='assesment_report', on_delete=models.CASCADE)
+    comment = models.TextField(blank=True, default='')
+    REVISION_CHOICES = [
+    ('Revision Minor', 'Revision Minor'),
+    ('Revision Major', 'Revision Major'),
+    ('No Revision', 'No Revision'),
+    ]
+    final_score = models.DecimalField(max_digits=5, decimal_places=2,blank=True, null=True,default=0)
+    revision = models.CharField(max_length=20, choices=REVISION_CHOICES, default='No Revision')
+    reviewed_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        verbose_name = 'Laporan Penilaian'
+        verbose_name_plural = 'Laporan Penilaian'
+    def __str__(self):
+        return f"{self.assesment.submission_apply.team.name} - Reviewed by : {self.assesment.reviewer.full_name}"
 
+    def save(self, *args, **kwargs):
+        self.calculate_final_score()
+        if self.revision != 'No Revision':
+            self.assesment.submission_apply.status = SubmissionsProposalApply.STATUS[3][0]
+        else:
+            self.assesment.submission_apply.status = SubmissionsProposalApply.STATUS[4][0]
+        self.assesment.submission_apply.save()
+        super(AssesmentReport, self).save(*args, **kwargs)
 
-
-
+    def calculate_final_score(self):
+        final_score = 0
+        for stage_assessment in self.assesment.assessment_values_2.all():
+            presentase_decimal = stage_assessment.key_assesment.presentase / 100
+            final_score += stage_assessment.score * presentase_decimal
+        self.final_score = final_score
 
 
 @receiver(m2m_changed, sender=LecturerTeamSubmissionApply.submission_apply.through)
@@ -240,3 +247,9 @@ def update_assesments(sender, instance, action, **kwargs):
     elif action == 'post_remove':
         for submission in instance.submission_apply.all():
             AssesmentSubmissionsProposal.objects.filter(submission_apply=submission, reviewer=instance.lecturer).delete()
+
+@receiver(post_save, sender=AssesmentSubmissionsProposal)
+def update_final_score(sender, instance, **kwargs):
+    for report in instance.assesment_report.all():
+        report.calculate_final_score()
+        report.save()

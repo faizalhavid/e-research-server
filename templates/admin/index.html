@@ -6,74 +6,125 @@
 {% block extrastyle %}
 <style>
 
-    .chart-container {
-        display: flex;
-        justify-content: space-around;
-        width: window.innerWidth;
-        height: 500px;
-        border: 1px solid grey;
-        margin: 0 auto;
-        padding: 20px;
-        margin-top: 20px;
-    }
+
 
     .table-chart {
-        height: 50px;
+        height: auto; /* Adjust height automatically */
         margin-left: 20px;
         width: 30%;
+        overflow-y: auto; /* Enable vertical scroll if needed */
     }
-    .table-chart th {
+
+    .table-chart th, .table-chart td {
         text-align: center;
+        padding: 10px; /* Add more padding for better readability */
+        border-bottom: 1px solid #ddd; /* Lighter border for each row */
     }
-    .table-chart td {
-        text-align: center;
+
+    .chart-container {
+        display: flex;
+        flex-direction: column; /* Stack elements vertically */
+        align-items: center; /* Center items horizontally */
+        justify-content: space-around; /* Even spacing around items */
+        width: 90%; /* Adjust width as needed */
+        margin: 20px auto; /* Center container and add vertical spacing */
+        padding: 20px;
+        background-color: #ffffff; /* White background */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+        border-radius: 10px; /* Rounded corners */
     }
-    .table-chart tbody {
-        height: 50px !important;
-        
+
+    /* Additional styling for the form within the chart-container for consistency */
+    .chart-container form {
+        width: 80%; /* Adjust form width */
+        margin-bottom: 20px; /* Add some space below the form */
     }
-    .table-chart tbody tr:nth-child(odd) {
-        background-color: #848484;
-        
+
+    /* Style for headings inside chart-container for a uniform look */
+    .chart-container h1 {
+        color: #333; /* Dark grey color for text */
+        margin: 20px 0; /* Add vertical spacing */
     }
+
+    /* Style adjustments for the table within chart-container */
+    .chart-container .table-chart {
+        width: 80%; /* Adjust table width */
+        margin-top: 20px; /* Add space above the table */
+        border-collapse: collapse; /* Remove gaps between cells */
+    }
+
+    .chart-container .table-chart th, .chart-container .table-chart td {
+        border: 1px solid #ddd; /* Light grey border for cells */
+        padding: 8px; /* Padding inside cells */
+        text-align: left; /* Align text to the left */
+    }
+
+    .chart-container .table-chart th {
+        background-color: #f8f8f8; /* Light grey background for header */
+        color: #333; /* Dark grey color for header text */
+    }
+
 
 </style>
 {% endblock %}
 
 {% block content %}
-
-<main class='card'>
-    <form method="get">
-        {{ form.period }}
-        <input type="submit" value="Select period">
-    </form>
-    <h1 class="text-center">Number of students per departement {{list_chart_data.periode}}</h1>
-    <div class='chart-container'>
-        <canvas id="chartNumberOfStudentsPerDepartement"></canvas>
-        <table class="table-chart">
-            <thead>
-                <tr>
-                    <th>Departement</th>
-                    <th>Number of students</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for label in list_chart_data.labels %}
-                    <tr>
-                        <td>{{ label }}</td>
-                        <td>{{ list_chart_data.datasets.0.data|get_item:forloop.counter0 }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    <h1 class="text-center">Number of students per major {{second_chart_data.periode}}</h1>
-    <div class='chart-container'>
-        <canvas id="mySecondChart"></canvas>
-    </div>
-    <h1 class="text-center">Number of students per category {{third_chart_data.periode}}</h1>
-    <div class='chart-container'>
-        <canvas id="chartNumberOfStudentsPerCategory"></canvas>
+<h1>aaaaa</h1>
+<main class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h1>Grafik Peserta PKM {{periode}}</h1>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="mb-4">
+                        <div class="form-group">
+                            <label for="period" class="font-weight-bold">Select Period:</label>
+                            {{ form.period }}
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Select period</button>
+                    </form>
+                    <section>
+                        <h2 class="text-center">Number of students per department {{list_chart_data.periode}}</h2>
+                        <div class="chart-container d-flex justify-content-center mt-4">
+                            <canvas id="chartNumberOfStudentsPerDepartement"></canvas>
+                        </div>
+                        <div class="table-responsive mt-4">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Department</th>
+                                        <th>Number of students</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for label in list_chart_data.labels %}
+                                        <tr>
+                                            <td>{{ label }}</td>
+                                            <td>{{ list_chart_data.datasets.0.data|get_item:forloop.counter0 }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                    <section>
+                        <h2 class="text-center">Number of students per major {{second_chart_data.periode}}</h2>
+                        <div class="chart-container d-flex justify-content-center mt-4">
+                            <canvas id="mySecondChart"></canvas>
+                        </div>
+                    </section>
+                    <section>
+                        <h2 class="text-center">Number of students per category {{third_chart_data.periode}}</h2>
+                        <div class="chart-container d-flex justify-content-center mt-4">
+                            <canvas id="chartNumberOfStudentsPerCategory"></canvas>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+        
     </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -121,10 +172,49 @@
     });
     
 
+    var labels = {{ second_chart_data.labels|safe }};
+    var dataValues = [
+        {% for dataset in second_chart_data.datasets %}
+            {{ dataset.data.0 }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    ];
+    var dataValues = [
+        {% for dataset in second_chart_data.datasets %}
+            {{ dataset.data.0 }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    ];
+
+
     var ctx2 = document.getElementById('mySecondChart').getContext('2d');
+    
     var mySecondChart = new Chart(ctx2, {
         type: '{{ second_chart_type }}',
-        data: {{ second_chart_data|safe }},
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Jumlah Peserta PKM per Jurusan',
+                data: dataValues,
+                backgroundColor: [
+                  'rgba(255, 99, 132, 0.2)',
+                  'rgba(255, 159, 64, 0.2)',
+                  'rgba(255, 205, 86, 0.2)',
+                  'rgba(75, 192, 192, 0.2)',
+                  'rgba(54, 162, 235, 0.2)',
+                  'rgba(153, 102, 255, 0.2)',
+                  'rgba(201, 203, 207, 0.2)'
+                ],
+                borderColor: [
+                  'rgb(255, 99, 132)',
+                  'rgb(255, 159, 64)',
+                  'rgb(255, 205, 86)',
+                  'rgb(75, 192, 192)',
+                  'rgb(54, 162, 235)',
+                  'rgb(153, 102, 255)',
+                  'rgb(201, 203, 207)'
+                ],
+                borderWidth: 1
+              }]
+        },
         options: {
             responsive: true,
             scales: {

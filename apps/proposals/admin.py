@@ -87,15 +87,8 @@ class KeyStageAssesment2Admin(admin.ModelAdmin):
 
 
     def category_display(self, obj):
-
         return ", ".join([category.name for category in obj.category.all()])
     category_display.short_description = 'Categories'  # Optional: Sets the column header
-
-
-    class Meta:
-        model = StageAssesment1
-        fields = '__all__'
-
 
 
 class StageAssesment1Form(forms.ModelForm):
@@ -103,7 +96,7 @@ class StageAssesment1Form(forms.ModelForm):
     key_assesment = forms.ModelChoiceField(queryset=KeyStageAssesment1.objects.all(), widget=forms.Select(attrs={'class': 'custom-select'}))
     class Meta:
         model = StageAssesment1
-        fields = [ 'status','key_assesment']
+        fields = ['key_assesment', 'status']
         
 
     def __init__(self, *args, **kwargs):
@@ -113,12 +106,16 @@ class StageAssesment1Form(forms.ModelForm):
             'class': 'custom-select',
             'style': 'width:800px;word-wrap: break-word;height:900px!important;padding: 10px 10px!important;'
         })
+        if self.instance and self.instance.pk:
+            self.fields['key_assesment'].disabled = True
         if 'initial' in kwargs and 'key_assesment' in kwargs['initial']:
             self.fields['key_assesment'].disabled = True
 
 class StageAssesment1Inline(admin.TabularInline):
     model = StageAssesment1
     form = StageAssesment1Form
+    can_delete = False
+
 
     def get_formset(self, request, obj=None, **kwargs):
         key_assesments = KeyStageAssesment1.objects.all()
@@ -154,36 +151,41 @@ class StageAssesment2Form(forms.ModelForm):
             'style': 'width: 800px;' 
         })
         initial = kwargs.get('initial')
-        print(initial)
-        print(kwargs)
+  
         if self.instance and self.instance.pk:
+            self.fields['key_assesment'].disabled = True
+        if 'initial' in kwargs and 'key_assesment' in kwargs['initial']:
             self.fields['key_assesment'].disabled = True
 
 
 class StageAssesment2Inline(admin.TabularInline):
     model = StageAssesment2
     form = StageAssesment2Form
+    can_delete = False
 
     def get_formset(self, request, obj=None, **kwargs):
         key_assesments = KeyStageAssesment2.objects.filter(category=obj.submission_apply.category)
         key_assesment_count = key_assesments.count()
         self.extra = key_assesment_count if key_assesment_count > 0 else 1
         self.max_num = key_assesment_count
+        print(key_assesment_count, self.extra, self.max_num)
     
         initial = [{'key_assesment': key_assesment.id} for key_assesment in key_assesments]
         formset_class = super().get_formset(request, obj, **kwargs)
-    
+        form = formset_class.form
+        widget = form.base_fields['key_assesment'].widget
+        widget.can_add_related = False
+        widget.can_change_related = False
+        widget.can_delete_related = False
         class CustomFormSet(formset_class):
             def __init__(self, *args, **kwargs):
                 kwargs['initial'] = initial
                 super().__init__(*args, **kwargs)
                 for form, initial_data in zip(self.forms, initial):
-                    
                     if not form.is_bound and not hasattr(form, 'instance') or not form.instance.pk:
-                        form.initial = initial_data  # Directly set initial data
+                        form.initial = initial_data 
     
-        return CustomFormSet  # This should be outside the CustomFormSet class definition
-    
+        return CustomFormSet  
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "key_assesment":
             if request._obj_ is not None:
@@ -193,6 +195,11 @@ class StageAssesment2Inline(admin.TabularInline):
             else:
                 kwargs["queryset"] = KeyStageAssesment2.objects.none()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+class AssesmentReportInline(admin.TabularInline):
+    model = AssesmentReport
+    extra = 1
+    max_num = 1
 
 @admin.register(AssesmentSubmissionsProposal)
 class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
@@ -222,7 +229,7 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
             print("Formset is not valid:", formset.errors)
 
     
-    inlines = [StageAssesment1Inline, StageAssesment2Inline]
+    inlines = [StageAssesment1Inline, StageAssesment2Inline, AssesmentReportInline]
     change_form_template = 'admin/assesmentProposal/assesmentForm.html'
     list_display = ('submission_information', 'status_colored', 'reviewer', 'reviewed_at')
     list_editable = ('reviewer',)
@@ -279,11 +286,13 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
         return format_html('<span style="color: {};">{}</span>', color, obj.submission_apply.status)
     status_colored.short_description = 'Status'
 
+
+
 @admin.register(StageAssesment1)
-class StageAssesmenet1Admim(admin.ModelAdmin):
+class StageAssesment1Admin(admin.ModelAdmin):
     model = StageAssesment1
-    list_display = ('id','team_reviewed')
-    
+    list_display = ('id', 'team_reviewed')
+
     def changelist_view(self, request, *args, **kwargs):
         self.request = request
         return super().changelist_view(request, *args, **kwargs)
@@ -293,22 +302,33 @@ class StageAssesmenet1Admim(admin.ModelAdmin):
         submissions = [assesment.submission_apply for assesment in assesments]
         team = [submission.team for submission in submissions]
         return team
-        
+
     team_reviewed.short_description = 'Team Reviewed'
+
+    def get_model_perms(self, request):
+        """
+        Return empty perms dict if user is not superuser, thus hiding the model from admin index.
+        """
+        if request.user.is_superuser:
+            return super().get_model_perms(request)
+        return {}
 
 @admin.register(StageAssesment2)
 class StageAssesment2Admin(admin.ModelAdmin):
     model = StageAssesment2
-    list_display = ('id','get_assesment_title', 'key_assesment',  'score')
+    list_display = ('id', 'get_assesment_title', 'score')
 
     def get_assesment_title(self, obj):
         return f"{obj.assesment.submission_apply.title} - {obj.assesment.submission_apply.team}"
-    get_assesment_title.short_description = 'Assesment Title' 
-     # Sets column header in admin site
+    get_assesment_title.short_description = 'Assesment Title'
 
-
-    
-
+    def get_model_perms(self, request):
+        """
+        Return empty perms dict if user is not superuser, thus hiding the model from admin index.
+        """
+        if request.user.is_superuser:
+            return super().get_model_perms(request)
+        return {}
 class LecturerSubmissionApplyListFilter(admin.SimpleListFilter):
     title = 'lecturer'
     parameter_name = 'lecturer'

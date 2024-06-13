@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.utils import timezone
 from django.core.handlers.wsgi import WSGIRequest
 from apps.content_hub.admin import ArticleAdmin, NoticeAdmin
@@ -51,12 +51,27 @@ class EReasearchAdminSite(admin.AdminSite, AdminChartMixin):
         extra_context['form'] = form
         periode_now = form.cleaned_data.get('period') if form.is_valid() else timezone.now().year
 
-        pkm_participants_by_departement = [SubmissionsProposalApply.objects.filter(
-            Q(team__members__department=department) | Q(team__leader__department=department),
-            submission__program__period = periode_now,
-            ).count() for department in Departement.objects.all()
-        ]
+        pkm_participants_by_departement = []
 
+        # Iterasi melalui setiap departemen
+        for department in Departement.objects.all():
+            # Menghitung jumlah anggota tim berdasarkan departemen
+            member_count = SubmissionsProposalApply.objects.filter(
+                Q(team__members__department=department),
+                submission__program__period=periode_now
+            ).values('team__members').annotate(member_count=Count('team__members')).count()
+
+            # Menghitung jumlah leader berdasarkan departemen
+            leader_count = SubmissionsProposalApply.objects.filter(
+                Q(team__leader__department=department),
+                submission__program__period=periode_now
+            ).values('team__leader').annotate(leader_count=Count('team__leader')).count()
+
+            # Menghitung total partisipasi (anggota + leader)
+            total_count = member_count + leader_count
+
+            # Menambahkan hasil ke daftar
+            pkm_participants_by_departement.append(total_count)
         extra_context['list_chart_type'] = "pie"
         extra_context['list_chart_data'] = {
             "periode": f"{periode_now}",
@@ -71,19 +86,31 @@ class EReasearchAdminSite(admin.AdminSite, AdminChartMixin):
                 }
             ],
         }
-        datasets = [
-            {
-                "label": major.name,
-                "data": [SubmissionsProposalApply.objects.filter(Q(team__members__major=major) | Q(team__leader__major=major),submission__program__period = periode_now).count()],
-                "borderWidth": 0,
-            }
-            for major in majors
-        ]
+        
+        datasets = []
 
+        for major in majors:
+            member_count = SubmissionsProposalApply.objects.filter(
+                Q(team__members__major=major),
+                submission__program__period=periode_now
+            ).values('team__members').annotate(member_count=Count('team__members')).count()
+
+            leader_count = SubmissionsProposalApply.objects.filter(
+                Q(team__leader__major=major),
+                submission__program__period=periode_now
+            ).values('team__leader').annotate(leader_count=Count('team__leader')).count()
+
+            total_count = member_count + leader_count
+
+            datasets.append({
+                "label": major.abbreviation,
+                "data": [total_count],
+                "borderWidth": 0,
+            })
+                
         extra_context['second_chart_type'] = "bar"
         extra_context['second_chart_data'] = {
-            "periode": f"{periode_now}",
-            "labels": [major.name for major in majors],
+            "labels": [major.abbreviation for major in majors],
             "datasets": datasets,
         }
         
@@ -148,8 +175,8 @@ admin_site.register(SubmissionsProposalApply, SubmissionsProposalApplyAdmin)
 # admin_site.register(Proposal, ProposalsAdmin)
 admin_site.register(AssesmentSubmissionsProposal, AssesmentSubmissionsProposalAdmin)
 admin_site.register(LecturerTeamSubmissionApply, LecturerTeamSubmissionApplyAdmin)
-admin_site.register(StageAssesment1, StageAssesmenet1Admim)
-admin_site.register(KeyStageAssesment1, KeyStageAssesment2Admin)
+admin_site.register(StageAssesment1, StageAssesment1Admin)
+admin_site.register(KeyStageAssesment1, KeyStageAssesment1Admin)
 admin_site.register(StageAssesment2, StageAssesment2Admin)
 admin_site.register(KeyStageAssesment2, KeyStageAssesment2Admin)
 admin_site.register(PKMIdeaContribute, PKMIdeaContributeAdmin)

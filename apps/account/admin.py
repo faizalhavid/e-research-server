@@ -330,24 +330,25 @@ class UserAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     online_status.short_description = 'Online'
 
     def get_fieldsets(self, request, obj=None):
-        if request.user.is_superuser:
+        # Check if the user is a superuser or in the "Admin" group
+        if request.user.is_superuser or Group.objects.get(name="Admin").user_set.filter(id=request.user.id).exists():
             return super().get_fieldsets(request, obj)
+        
+        # For users not in the "Admin" group, exclude certain sections
         return (
-            ('Account', {'fields': ('email', 'password','user_role')}),
-            ('Personal info', {'fields': ('first_name', 'last_name','agency')}),
-            ('Permissions', {'fields': ('is_active', 'groups')}),
-            ('Important dates', {'fields': ('last_login', 'date_joined')}),
-            ('User actions', {'fields': ('log_entries',)}),
-
+            ('Account', {'fields': ('email', 'password', 'user_role')}),
+            ('Personal info', {'fields': ('first_name', 'last_name')}),
+            # Exclude 'Permissions', 'Important dates', 'User actions' for non-Admin group users
         )
-    
+
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = super().get_readonly_fields(request, obj)
         user = request.user
-        if not user.is_superuser:
-            return readonly_fields + ('Student', 'Lecturer','is_superuser','is_active','last_login','date_joined')
+        # Check if the user is not a superuser and not in the "Admin" group
+        if not user.is_superuser and not Group.objects.get(name="Admin").user_set.filter(id=user.id).exists():
+            return readonly_fields + ('Student', 'Lecturer', 'is_superuser', 'is_active', 'last_login', 'date_joined')
         return readonly_fields
-    
+        
     
     def user_role(self, obj):
         if hasattr(obj, 'user_profile'):
@@ -361,10 +362,17 @@ class UserAdmin(ImportExportModelAdmin, admin.ModelAdmin):
             return "Admin"
         return ""
     user_role.short_description = 'User Role'
+    def get_model_perms(self, request):
+        """
+        Return empty perms dict if user is not superuser, thus hiding the model from admin index.
+        """
+        if request.user.is_superuser or Group.objects.get(name="Admin").user_set.filter(id=request.user.id).exists():
+            return super().get_model_perms(request)
+        return {}
     
 @admin.register(Departement)
 class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ( 'name', 'display_majors')
+    list_display = ( 'name','abbreviation', 'display_majors')
     search_fields = ('name', )
 
     def display_majors(self, obj):
@@ -374,7 +382,7 @@ class DepartmentAdmin(admin.ModelAdmin):
 
 @admin.register(Major)
 class MajorAdmin(admin.ModelAdmin):
-    list_display = ( 'name', 'total_student')
+    list_display = ( 'name','abbreviation', 'total_student')
     
     def total_student(self, obj):
         return Student.objects.filter(major=obj).count()

@@ -99,6 +99,7 @@ class Departement(models.Model):
 class Major(models.Model):
     name = models.CharField(max_length=50, blank=True, default='')
     department = models.ForeignKey(Departement, related_name='majors', on_delete=models.CASCADE, null=True)
+    abbreviation = models.CharField(max_length=10, blank=True, default='', verbose_name='Singkatan')
     def __str__(self):
         return self.name
 
