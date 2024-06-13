@@ -1,8 +1,23 @@
 {% extends "admin/change_form.html" %}
 {% block after_field_sets %}
 
+<style>
+    #form-container .custom-select {
+        width: 800px;
+        word-wrap: break-word;
+        height: 900px !important;
+        padding: 10px 10px !important;
+    }
+    .select2-container .select2-selection--single{
+        height : 60px;
+    }
+    .select2-container .select2-selection--single .select2-selection__rendered{
+        white-space: pre-wrap!important;
+    }
+</style>
+
 <script type="text/javascript">
-    var cardElement = document.querySelector('.card');
+    var cardElement = document.querySelector('.tab-content');
 
     cardElement.insertAdjacentHTML('beforeend', `
         <div class="pdf-viewer" style="padding: 20px; flex:1; height:100vh">

@@ -95,7 +95,7 @@ class SubmissionsProposalApply(models.Model):
 
 
 class KeyStageAssesment2(models.Model):
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=100,unique=True)
     description = models.TextField(blank=True, default='')
     presentase = models.DecimalField(max_digits=5, decimal_places=2)
     category = models.ManyToManyField('pkm.PKMScheme', related_name='key_assesments')
@@ -105,7 +105,7 @@ class KeyStageAssesment2(models.Model):
         verbose_name_plural = 'Parameter Penilaian Tahap 2'
     
     def __str__(self):
-        return f"{self.title} - {self.presentase}%"
+        return f"{self.title}- {self.presentase}%"
     
 class KeyStageAssesment1(models.Model):
     title = models.TextField(max_length=180)
@@ -124,9 +124,28 @@ class LecturerTeamSubmissionApply(models.Model):
 
     
     class Meta:
+        
         verbose_name = '3. Plot Team Mahasiswa - Reviewer'
         verbose_name_plural = '3. Plot Team Mahasiswa - Reviewer'
         
+# class LecturerSubmissionApply(models.Model):
+#     lecturer = models.ForeignKey('account.Lecturer', on_delete=models.CASCADE)
+#     submission_apply = models.ForeignKey('SubmissionsProposalApply', on_delete=models.CASCADE)
+#     lecturer_team_submission_apply = models.ForeignKey('LecturerTeamSubmissionApply', on_delete=models.CASCADE)
+
+#     class Meta:
+#         unique_together = ('lecturer', 'submission_apply', 'lecturer_team_submission_apply',)
+#         verbose_name = 'Lecturer Submission Apply'
+#         verbose_name_plural = 'Lecturer Submissions Apply'
+
+
+# class LecturerTeamSubmissionApply(models.Model):
+#     lecturer = models.ForeignKey('account.Lecturer', related_name='team_submission_apply', on_delete=models.CASCADE)
+#     submission_apply = models.ManyToManyField('SubmissionsProposalApply', through='LecturerSubmissionApply', related_name='lecturers')
+
+#     class Meta:
+#         verbose_name = '3. Plot Team Mahasiswa - Reviewer'
+#         verbose_name_plural = '3. Plot Team Mahasiswa - Reviewer'
 
             
 class AssesmentSubmissionsProposal(models.Model):
@@ -155,7 +174,8 @@ class AssesmentSubmissionsProposal(models.Model):
 class StageAssesment1(models.Model):
     key_assesment = models.ForeignKey(KeyStageAssesment1, related_name='assessment_values_1', on_delete=models.CASCADE)
     assesment = models.ForeignKey(AssesmentSubmissionsProposal, related_name='assessment_values_1', on_delete=models.CASCADE)
-    # status = models.BooleanField(default=False)  # This field is being removed.
+    status = models.BooleanField(default=False)
+    
 
     class Meta:
         unique_together = ('key_assesment', 'assesment',)
@@ -165,11 +185,10 @@ class StageAssesment1(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)  
         self.assesment.refresh_from_db()
-        # Since 'status' field is removed, we adjust the logic to check for any StageAssesment1 records.
-        # Assuming the existence of any StageAssesment1 records should trigger changing the submission_apply.status.
-        if self.assesment.assessment_values_1.exists():
+        if any(sa.status for sa in self.assesment.assessment_values_1.all()):
             self.assesment.submission_apply.status = SubmissionsProposalApply.STATUS[3][0]
-            self.assesment.submission_apply.save()
+        self.assesment.submission_apply.save()
+
 
     def __str__(self):
         return f"{self.key_assesment.title} - {self.assesment.submission_apply.team.name}"
