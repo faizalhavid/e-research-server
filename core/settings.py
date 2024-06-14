@@ -235,63 +235,60 @@ TEMPLATES = [
 ]
 
 
-JAZZMIN_SETTINGS = {
-    'site_header': "Desphixs",
-    'site_brand': "No1 Digital Marketplace for everyone.",
-    'site_logo': "assets/imgs/logo.png",
-    'copyright':  "All Right Reserved 2023",
-    "welcome_sign": "Welcome to Desphixs, Login Now.",
+# JAZZMIN_SETTINGS = {
+#     'site_header': "Desphixs",
+#     'site_brand': "No1 Digital Marketplace for everyone.",
+#     'site_logo': "assets/imgs/logo.png",
+#     'copyright':  "All Right Reserved 2023",
+#     "welcome_sign": "Welcome to Desphixs, Login Now.",
     
-    "topmenu_links": [
-        {"name": "Home",  "url": "admin:index", "permissions": ["auth.view_user"]},
-        {"name": "Company", "url": "/admin/addons/company/"},
-        {"name": "Users", "url": "/admin/userauths/user/"},
-    ],
+#     "topmenu_links": [
+#         {"name": "Home",  "url": "admin:index", "permissions": ["auth.view_user"]},
+#         {"name": "Company", "url": "/admin/addons/company/"},
+#         {"name": "Users", "url": "/admin/userauths/user/"},
+#     ],
 
-    "order_with_respect_to": [
-        # replace with your own models
-        "store",
-        "store.product",
-        "store.cartorder",
-        "store.cartorderitem",
-        "store.category",
-        "store.brand",
-        "store.productfaq",
-        "store.productoffers",
-        "store.productbidders",
-        "store.review",
-        "vendor",
-        "userauths"
-        "addons",
-        "addons.Company",
-        "addons.BasicAddon"
-    ],
+#     "order_with_respect_to": [
+#         # replace with your own models
+#         "store",
+#         "store.product",
+#         "store.cartorder",
+#         "store.cartorderitem",
+#         "store.category",
+#         "store.brand",
+#         "store.productfaq",
+#         "store.productoffers",
+#         "store.productbidders",
+#         "store.review",
+#         "vendor",
+#         "userauths"
+#         "addons",
+#         "addons.Company",
+#         "addons.BasicAddon"
+#     ],
     
-    "icons": {
-        # replace with your own model & icon 
-        "admin.LogEntry": "fas fa-file",
+#     "icons": {
+#         # replace with your own model & icon 
+#         "admin.LogEntry": "fas fa-file",
 
-        "auth": "fas fa-users-cog",
-        "auth.user": "fas fa-user",
+#         "auth": "fas fa-users-cog",
+#         "auth.user": "fas fa-user",
 
-        "userauths.User": "fas fa-user",
-        "userauths.Profile":"fas fa-address-card",
+#         "userauths.User": "fas fa-user",
+#         "userauths.Profile":"fas fa-address-card",
 
-    },
-    "show_ui_builder" : True
-}
+#     },
+#     "show_ui_builder" : True
+# }
 
 
 JAZZMIN_SETTINGS = {
-    "site_title": "your_site_name",
-    "site_header": "your_site_header",
-    "site_brand": "your_site_brand",
-    "site_icon": "images/favicon.png",
-    # Add your own branding here
-    "site_logo": None,
-    "welcome_sign": "Welcome to the your_site_name",
-    # Copyright on the footer
-    "copyright": "your_site_name",
+    "site_title": "E Research",
+    "site_header": "E Research",
+    "site_brand": "E Research",
+    "welcome_sign": "Welcome to E Research",
+    "site_logo": "team/Evos/Group_361.png",
+    "copyright": "E Research",
     "user_avatar": None,
     ############
     # Top Menu #
@@ -299,9 +296,9 @@ JAZZMIN_SETTINGS = {
     # Links to put along the top menu
     "topmenu_links": [
         # Url that gets reversed (Permissions can be added)
-        {"name": "your_site_name", "url": "home", "permissions": ["auth.view_user"]},
-        # model admin to link to (Permissions checked against model)
-        {"model": "auth.User"},
+        {"name": "E Research", "url": "home", "permissions": ["auth.view_user"]},
+        {"name": "Submission Proposal", "url": "admin:proposals_submissionproposal_changelist", "permissions": ["auth.view_user"]},
+        {"name": "Idea Contribute", "url": "admin:pkm_pkmiadeacontribute_changelist", "permissions": ["auth.view_user"]},
     ],
     #############
     # Side Menu #
@@ -313,12 +310,84 @@ JAZZMIN_SETTINGS = {
     # Custom icons for side menu apps/models See https://fontawesome.com/icons?d=gallery&m=free&v=5.0.0,5.0.1,5.0.10,5.0.11,5.0.12,5.0.13,5.0.2,5.0.3,5.0.4,5.0.5,5.0.6,5.0.7,5.0.8,5.0.9,5.1.0,5.1.1,5.2.0,5.3.0,5.3.1,5.4.0,5.4.1,5.4.2,5.13.0,5.12.0,5.11.2,5.11.1,5.10.0,5.9.0,5.8.2,5.8.1,5.7.2,5.7.1,5.7.0,5.6.3,5.5.0,5.4.2
     # for the full list of 5.13.0 free icon classes
     "icons": {
-        "auth": "fas fa-users-cog",
-        "auth.user": "fas fa-user",
-        "users.User": "fas fa-user",
         "auth.Group": "fas fa-users",
-        "admin.LogEntry": "fas fa-file",
+        "proposals.SubmissionProposal": "fas fa-file",
+        "proposals.SubmissionsProposalApply": "fas fa-plus",
+        "proposals.AssessmentSubmissionsProposal": "fas fa-pencil-alt",
+        "proposals.KeyStageAssesment1": "fas fa-file-contract",
+        "proposals.KeyStageAssesment2": "fas fa-file-contract",
+        "proposals.LecturerTeamSubmissionApply": "fas fa-share-alt",
+        
+        "pkm.PKMProgram": "fas fa-award",
+        "pkm.PKMIdeaContribute": "fas fa-lightbulb",
+        "pkm.PKMIdeaContributeApplyTeam": "fas fa-users",
+        "pkm.PKMAcitivitySchedule": "fas fa-calendar",
+        "pkm.PKMScheme": "fas fa-tags",
+        "team.Team": "fas fa-users",
+        "team.TeamApply": "fas fa-user-plus",
+        "team.TeamTask": "fas fa-tasks",
+        "team.TeamVacancies": "fas fa-user-plus",
+        "content_hub.Article": "fas fa-newspaper",
+        "content_hub.Notice": "fas fa-bell",
+        "notification.Notification": "fas fa-bell",
+        "account.User": "fas fa-user",
+        "account.Profile": "fas fa-address-card",
+        "account.Student": "fas fa-user-graduate",
+        "account.Lecturer": "fas fa-chalkboard-teacher",
+        "account.Guest": "fas fa-user-secret",
+        "account.Admin": "fas fa-user-tie",
+        "account.Departement": "fas fa-sitemap",
+        "account.Major": "fas fa-book",
+        "account.Role": "fas fa-user-tag",
+        "account.UserRole": "fas fa-user-tag",
+
+        
+
     },
+
+    "order_with_respect_to": [
+        # replace with your own models
+        "auth",
+        "auth.user",
+        "auth.group",
+        "account",
+        "account.user",
+        "account.profile",
+        "account.student",
+        "account.lecturer",
+        "account.guest",
+        "account.admin",
+        "account.departement",
+        "account.major",
+        "account.role",
+        "account.userrole",
+        "pkm",
+        "pkm.pkmprogram",
+        "pkm.pkmiadeacontribute",
+        "pkm.pkmiadeacontributeapplyteam",
+        "pkm.pkmactivityschedule",
+        "pkm.pkmscheme",
+        "proposals",
+        "proposals.submissionproposal",
+        "proposals.submissionsproposalapply",
+        "proposals.assessmentsubmissionsproposal",
+        "proposals.keyassessment1",
+        "proposals.keyassessment2",
+        "proposals.lecturerteamsubmissionapply",
+        "content_hub",
+        "content_hub.article",
+        "content_hub.notice",
+        "notification",
+        "notification.notification",
+        "team",
+        "team.team",
+        "team.teamapply",
+        "team.teamtask",
+        "team.teamvacancies",
+    ],
+
+
+
     # # Icons that are used when one is not manually specified
     "default_icon_parents": "fas fa-chevron-circle-right",
     "default_icon_children": "fas fa-arrow-circle-right",
@@ -326,13 +395,8 @@ JAZZMIN_SETTINGS = {
     # Related Modal #
     #################
     # Use modals instead of popups
-    "related_modal_active": False,
-    #############
-    # UI Tweaks #
-    #############
-    # Relative paths to custom CSS/JS scripts (must be present in static files)
-    # Uncomment this line once you create the bootstrap-dark.css file
-    # "custom_css": "css/bootstrap-dark.css",
+    "related_modal_active": True,
+
     "custom_js": None,
     # Whether to show the UI customizer on the sidebar
     "show_ui_builder": False,
@@ -347,38 +411,38 @@ JAZZMIN_SETTINGS = {
     },
 }
 
-JAZZMIN_UI_TWEAKS = {
-    "navbar_small_text": False,
-    "footer_small_text": False,
-    "body_small_text": False,
-    "brand_small_text": False,
-    "brand_colour": "navbar-success",
-    "accent": "accent-teal",
-    "navbar": "navbar-dark",
-    "no_navbar_border": False,
-    "navbar_fixed": False,
-    "layout_boxed": False,
-    "footer_fixed": False,
-    "sidebar_fixed": False,
-    "sidebar": "sidebar-dark-info",
-    "sidebar_nav_small_text": False,
-    "sidebar_disable_expand": False,
-    "sidebar_nav_child_indent": False,
-    "sidebar_nav_compact_style": False,
-    "sidebar_nav_legacy_style": False,
-    "sidebar_nav_flat_style": False,
-    "theme": "cyborg",
-    "dark_mode_theme": None,
-    "button_classes": {
-        "primary": "btn-primary",
-        "secondary": "btn-secondary",
-        "info": "btn-info",
-        "warning": "btn-warning",
-        "danger": "btn-danger",
-        "success": "btn-success",
-    },
-}
-
+# JAZZMIN_UI_TWEAKS = {
+#     "navbar_small_text": False,
+#     "footer_small_text": False,
+#     "body_small_text": False,
+#     "brand_small_text": False,
+#     "brand_colour": "navbar-info",
+#     "accent": "accent-info",
+#     "navbar": "navbar-info navbar-dark",
+#     "no_navbar_border": False,
+#     "navbar_fixed": False,
+#     "layout_boxed": False,
+#     "footer_fixed": False,
+#     "sidebar_fixed": False,
+#     "sidebar": "sidebar-dark-primary",
+#     "sidebar_nav_small_text": True,
+#     "sidebar_disable_expand": False,
+#     "sidebar_nav_child_indent": False,
+#     "sidebar_nav_compact_style": False,
+#     "sidebar_nav_legacy_style": False,
+#     "sidebar_nav_flat_style": True,
+#     "theme": "cyborg",
+#     "dark_mode_theme": "darkly",
+#     "button_classes": {
+#         "primary": "btn-primary",
+#         "secondary": "btn-secondary",
+#         "info": "btn-info",
+#         "warning": "btn-warning",
+#         "danger": "btn-danger",
+#         "success": "btn-success"
+#     },
+#     "actions_sticky_top": True
+# }
 
 
 # AWS

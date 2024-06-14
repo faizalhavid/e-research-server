@@ -69,66 +69,70 @@
 {% endblock %}
 
 {% block content %}
-<h1>aaaaa</h1>
-<main class="container mt-5">
-    <div class="row">
+
+
+
+<form method="get" class="mb-4">
+    <div class="form-row">
+        <div class="col-12 mb-3">
+            <label for="period" class="font-weight-bold">Pilih Tahun:</label>
+            {{ form.period }}
+        </div>
         <div class="col-12">
+            <button type="submit" class="btn btn-success btn-block">
+                <i class="fa fa-chart-pie"></i> Tampilkan Grafik
+            </button>
+        </div>
+    </div>
+</form>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 col-md-4 mb-3">
             <div class="card">
                 <div class="card-header">
-                    <h1>Grafik Peserta PKM {{periode}}</h1>
+                    <i class="fas fa-chart-bar"></i> Grafik Peserta PKM berdasarkan Department Tahun{{ list_chart_data.periode }}
                 </div>
                 <div class="card-body">
-                    <form method="get" class="mb-4">
-                        <div class="form-group">
-                            <label for="period" class="font-weight-bold">Select Period:</label>
-                            {{ form.period }}
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-block">Select period</button>
-                    </form>
-                    <section>
-                        <h2 class="text-center">Number of students per department {{list_chart_data.periode}}</h2>
-                        <div class="chart-container d-flex justify-content-center mt-4">
-                            <canvas id="chartNumberOfStudentsPerDepartement"></canvas>
-                        </div>
-                        <div class="table-responsive mt-4">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Department</th>
-                                        <th>Number of students</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for label in list_chart_data.labels %}
-                                        <tr>
-                                            <td>{{ label }}</td>
-                                            <td>{{ list_chart_data.datasets.0.data|get_item:forloop.counter0 }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
-                    <section>
-                        <h2 class="text-center">Number of students per major {{second_chart_data.periode}}</h2>
-                        <div class="chart-container d-flex justify-content-center mt-4">
-                            <canvas id="mySecondChart"></canvas>
-                        </div>
-                    </section>
-                    <section>
-                        <h2 class="text-center">Number of students per category {{third_chart_data.periode}}</h2>
-                        <div class="chart-container d-flex justify-content-center mt-4">
-                            <canvas id="chartNumberOfStudentsPerCategory"></canvas>
-                        </div>
-                    </section>
+                    <div class="chart-container d-flex justify-content-center mt-4">
+                        <canvas id="chartNumberOfStudentsPerDepartement"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
-        
+
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie"></i> Grafik Peserta PKM berdasarkan Prodi Tahun {{ second_chart_data.periode }}
+                </div>
+                <div class="card-body">
+                    <div class="chart-container d-flex justify-content-center mt-4">
+                        <canvas id="mySecondChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-line"></i> Grafik Peserta PKM berdasarkan Skema PKM Tahun {{ third_chart_data.periode }}
+                </div>
+                <div class="card-body">
+                    <div class="chart-container d-flex justify-content-center mt-4">
+                        <canvas id="chartNumberOfStudentsPerCategory"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-</main>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.7.3/dist/Chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.7.0"></script>
+
 <script>
     var ctx = document.getElementById('chartNumberOfStudentsPerDepartement').getContext('2d');
     var chartNumberOfStudentsPerDepartement = new Chart(ctx, {
@@ -153,20 +157,21 @@
                 legend: {
                     position: 'right'
                 },
+                tooltips: {
+                    enabled: false
+                },
+
                 datalabels: {
+                    display: (context) => {
+                        return context.dataset.data[context.dataIndex] > 0;
+                    },
                     color: 'black',                   
                     font: {
-                        weight: 'bold'
+                        weight: 'bold',
+                        fontSize: 20
                     },
-                    formatter: Math.round,
-                    value : {
-                        display: true,
-                        color: 'black',
-                        font: {
-                            weight: 'bold'
-                        }
-                    }
                 }
+                
             },
         }
     });
@@ -243,7 +248,7 @@
             },
         }
     });
-
+    console.log({{ third_chart_data|safe }})
     var ctx3 = document.getElementById('chartNumberOfStudentsPerCategory').getContext('2d');
     var chartNumberOfStudentsPerCategory = new Chart(ctx3, {
         type: '{{ third_chart_type }}',
@@ -259,9 +264,7 @@
                 },                    
             },
             plugins: {
-                legend: {
-                    position: 'right'
-                },
+
                 datalabels: {
                     color: 'black',                   
                     font: {
@@ -274,7 +277,8 @@
                         font: {
                             weight: 'bold'
                         }
-                    }
+                    },
+                   
                 }
             },
         }

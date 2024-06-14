@@ -370,6 +370,44 @@ class UserAdmin(ImportExportModelAdmin, admin.ModelAdmin):
             return super().get_model_perms(request)
         return {}
     
+    def has_change_permission(self, request, obj=None):
+        # Allow changing if no specific object is targeted (e.g., accessing the list view)
+        if obj is None:
+            return super().has_change_permission(request, obj)
+        # Deny permission if the target user is a superuser and the requesting user is not a superuser
+        if obj.is_superuser and not request.user.is_superuser:
+            return False
+        # Allow superusers to change any user
+        if request.user.is_superuser:
+            return True
+        # Allow staff users to change non-superuser accounts
+        if request.user.is_staff and not obj.is_superuser:
+            return True
+        # Allow users to change their own details
+        if obj == request.user:
+            return True
+        # Otherwise, no permission
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Allow deleting if no specific object is targeted (e.g., accessing the list view)
+        if obj is None:
+            return super().has_delete_permission(request, obj)
+        # Deny permission if the target user is a superuser and the requesting user is not a superuser
+        if obj.is_superuser and not request.user.is_superuser:
+            return False
+        # Allow superusers to delete any user
+        if request.user.is_superuser:
+            return True
+        # Allow staff users to delete non-superuser accounts
+        if request.user.is_staff and not obj.is_superuser:
+            return True
+        # Allow users to delete their own account
+        if obj == request.user:
+            return True
+        # Otherwise, no permission
+        return False
+        
 @admin.register(Departement)
 class DepartmentAdmin(admin.ModelAdmin):
     list_display = ( 'name','abbreviation', 'display_majors')

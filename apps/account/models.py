@@ -87,6 +87,7 @@ class UserProfile(models.Model):
 class Departement(models.Model):
     name = models.CharField(max_length=50, blank=True, default='')
     abbreviation = models.CharField(max_length=10, blank=True, default='', verbose_name='Singkatan')
+    color = models.CharField(max_length=7, blank=True, default='#000000')
     def __str__(self):
         return self.name
     def save(self, *args, **kwargs):
@@ -100,6 +101,7 @@ class Major(models.Model):
     name = models.CharField(max_length=50, blank=True, default='')
     department = models.ForeignKey(Departement, related_name='majors', on_delete=models.CASCADE, null=True)
     abbreviation = models.CharField(max_length=10, blank=True, default='', verbose_name='Singkatan')
+    color = models.CharField(max_length=7, blank=True, default='#000000')
     def __str__(self):
         return self.name
 

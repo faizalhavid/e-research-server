@@ -53,9 +53,8 @@ class EReasearchAdminSite(admin.AdminSite, AdminChartMixin):
 
         pkm_participants_by_departement = []
 
-        # Iterasi melalui setiap departemen
         for department in Departement.objects.all():
-            # Menghitung jumlah anggota tim berdasarkan departemen
+
             member_count = SubmissionsProposalApply.objects.filter(
                 Q(team__members__department=department),
                 submission__program__period=periode_now
@@ -67,10 +66,8 @@ class EReasearchAdminSite(admin.AdminSite, AdminChartMixin):
                 submission__program__period=periode_now
             ).values('team__leader').annotate(leader_count=Count('team__leader')).count()
 
-            # Menghitung total partisipasi (anggota + leader)
-            total_count = member_count + leader_count
 
-            # Menambahkan hasil ke daftar
+            total_count = member_count + leader_count
             pkm_participants_by_departement.append(total_count)
         extra_context['list_chart_type'] = "pie"
         extra_context['list_chart_data'] = {
@@ -81,7 +78,7 @@ class EReasearchAdminSite(admin.AdminSite, AdminChartMixin):
                 {
                     "label": "PKM Participants",
                     "data": pkm_participants_by_departement,
-                    "backgroundColor": [color[0][department.abbreviation] for department in Departement.objects.all()],
+                    "backgroundColor": [departement.color for departement in Departement.objects.all()],
                     "tooltip": "PKM Participants", 
                 }
             ],
@@ -110,6 +107,7 @@ class EReasearchAdminSite(admin.AdminSite, AdminChartMixin):
                 
         extra_context['second_chart_type'] = "bar"
         extra_context['second_chart_data'] = {
+            "periode": f"{periode_now}",
             "labels": [major.abbreviation for major in majors],
             "datasets": datasets,
         }
@@ -123,11 +121,41 @@ class EReasearchAdminSite(admin.AdminSite, AdminChartMixin):
                 "label": "PKM 8 Category",
                 "data": [SubmissionsProposalApply.objects.filter(category__abbreviation__exact=category, submission__program__period = periode_now).count() for category in pkm_8_category],
                 "borderWidth": 0,
+                "backgroundColor": [
+                    'rgb(255, 99, 132)',
+                    'rgb(255, 159, 64)',
+                    'rgb(255, 205, 86)',
+                    'rgb(75, 192, 192)',
+                    'rgb(54, 162, 235)',
+                    'rgb(153, 102, 255)',
+                    'rgb(201, 203, 207)',
+                    'rgb(255, 99, 132)',
+                    'rgb(255, 159, 64)',
+                    'rgb(255, 205, 86)',
+
+                ],
+                "borderColor": [
+                    'rgb(255, 99, 132)',
+                    'rgb(255, 159, 64)',
+                    'rgb(255, 205, 86)',
+                    'rgb(75, 192, 192)',
+                    'rgb(54, 162, 235)',
+                    'rgb(153, 102, 255)',
+                    'rgb(201, 203, 207)'
+                ],
             },
             {
                 "label": "Insentif PKM Category",
                 "data": [SubmissionsProposalApply.objects.filter(category__abbreviation__exact=category, submission__program__period = periode_now).count() for category in insentif_pkm],
                 "borderWidth": 0,
+                "backgroundColor": [
+                    'rgb(255, 99, 132)',
+                    'rgb(255, 159, 64)',
+                ],
+                "borderColor": [
+                    'rgb(255, 99, 132)',
+                    'rgb(255, 159, 64)',
+                ],
             }
         ]
 

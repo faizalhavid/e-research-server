@@ -35,7 +35,7 @@ class SubmissionProposal(models.Model):
     status = models.CharField(max_length=10, choices=STATUS, default='SUBMITTED')
 
     class Meta:
-        verbose_name_plural = '1. Submission Proposal'
+        verbose_name_plural = 'Submission Proposals'
         
 
     def __str__(self):
@@ -70,7 +70,7 @@ class SubmissionsProposalApply(models.Model):
         return f"{self.team.name} - {self.submission.title}"
     
     class Meta:
-        verbose_name_plural = '2. Pengumpulan Proposal'
+        verbose_name_plural = 'Proposal Mahasiswa'
 
     def save(self, *args, **kwargs):
         if not self.category:
@@ -127,8 +127,7 @@ class LecturerTeamSubmissionApply(models.Model):
     
     class Meta:
         
-        verbose_name = '3. Plot Team Mahasiswa - Reviewer'
-        verbose_name_plural = '3. Plot Team Mahasiswa - Reviewer'
+        verbose_name = 'Pembagian Team & Reviewer'
         
             
 class AssesmentSubmissionsProposal(models.Model):
