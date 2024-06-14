@@ -71,24 +71,94 @@
 {% block content %}
 
 
-
-<form method="get" class="mb-4">
-    <div class="form-row">
-        <div class="col-12 mb-3">
-            <label for="period" class="font-weight-bold">Pilih Tahun:</label>
-            {{ form.period }}
+<div class='container-fluid py-4'>
+    <div class="row">
+        <!-- Notices Component -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="mb-0">Latest Notices</h2>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% if notices %}
+                        {% for notice in notices %}
+                            <a href="{% url 'admin:content_hub_notice_change' notice.id %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="mb-0">{{ notice.title }}</h5>
+                                    <small class="text-muted">{{ notice.created|date:"N j, Y" }}</small>
+                                </div>
+                                <p class="mb-2">{{ notice.content|truncatewords:20 }}</p>
+                                <small class="text-muted">Priority: {{ notice.get_priority_display }}</small>
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-group-item">
+                            <h5 class="mb-1">No Notices Available</h5>
+                            <p>Currently, there are no notices to display. Please check back later.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>  
         </div>
-        <div class="col-12">
-            <button type="submit" class="btn btn-success btn-block">
-                <i class="fa fa-chart-pie"></i> Tampilkan Grafik
-            </button>
+        <!-- PKM Schedule Component -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="mb-0">Upcoming PKM Activities</h2>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% if pkm_schedule %}
+                        {% for schedule in pkm_schedule %}
+                            <a href="{% url 'admin:pkm_pkmactivityschedule_change' schedule.id %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="mb-0">{{ schedule.title }}</h5>
+                                    <small class="text-muted">{{ schedule.start_date|date:"N j, Y g:i A" }} - {{ schedule.end_date|date:"N j, Y g:i A" }}</small>
+                                </div>
+                                <p class="mb-2">{{ schedule.description|truncatewords:20 }}</p>
+                                <small class="text-muted">Program: {{ schedule.program.name }}</small>
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-group-item">
+                            <h5 class="mb-1">No PKM Activities Available</h5>
+                            <p>Currently, there are no PKM activities to display. Please check back later.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
-</form>
+    <!-- Empty Component Placeholder -->
+    {% if not notices and not pkm_schedule %}
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-info" role="alert">
+                    <h4 class="alert-heading">No Data Available</h4>
+                    <p>Currently, there are no notices or PKM activities to display. Please check back later.</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+
 
 <div class="container-fluid">
+    <form method="get" class="mb-4">
+        <div class="form-row">
+            <div class="col-12 mb-3">
+                <label for="period" class="font-weight-bold">Pilih Tahun:</label>
+                {{ form.period }}
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-success btn-block">
+                    <i class="fa fa-chart-pie"></i> Tampilkan Grafik
+                </button>
+            </div>
+        </div>
+    </form>
     <div class="row">
-        <div class="col-12 col-md-4 mb-3">
+        <div class="col-12 col-md-6 mb-3">
             <div class="card">
                 <div class="card-header">
                     <i class="fas fa-chart-bar"></i> Grafik Peserta PKM berdasarkan Department Tahun{{ list_chart_data.periode }}
@@ -101,7 +171,7 @@
             </div>
         </div>
 
-        <div class="col-12 col-md-4 mb-3">
+        <div class="col-12 col-md-6 mb-3">
             <div class="card">
                 <div class="card-header">
                     <i class="fas fa-chart-pie"></i> Grafik Peserta PKM berdasarkan Prodi Tahun {{ second_chart_data.periode }}
@@ -114,7 +184,7 @@
             </div>
         </div>
 
-        <div class="col-12 col-md-4 mb-3">
+        <div class="col-12 col-md-12 mb-3">
             <div class="card">
                 <div class="card-header">
                     <i class="fas fa-chart-line"></i> Grafik Peserta PKM berdasarkan Skema PKM Tahun {{ third_chart_data.periode }}

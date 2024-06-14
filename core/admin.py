@@ -165,6 +165,15 @@ class EReasearchAdminSite(admin.AdminSite, AdminChartMixin):
             "labels": list(pkm_8_category) + list(insentif_pkm_category),
             "datasets": datasets,
         }
+        
+        # Notice
+        extra_context['notices'] = Notice.objects.all().order_by('-created')[:5]
+        
+        # PKM Schedule
+        extra_context['pkm_schedule'] = PKMActivitySchedule.objects.all().order_by('-start_date')[:5]
+
+
+        
         return super().index(request, extra_context)
 
 

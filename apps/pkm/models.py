@@ -28,7 +28,7 @@ class PKMActivitySchedule(models.Model):
         verbose_name = 'Jadwal Kegiatan PKM'
         verbose_name_plural = 'Jadwal Kegiatan PKM'
     def __str__(self):
-        return f"{self.title} - {self.program.name}"
+        return f"{self.title} - {self.program}"
 
 class PKMScheme(models.Model):
     name = models.CharField(max_length=50)
