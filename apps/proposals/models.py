@@ -5,13 +5,12 @@ from django.dispatch import receiver
 from django.forms import ValidationError
 from taggit.managers import TaggableManager
 import os
-from django.db.models.signals import m2m_changed
+from django.db.models.signals import m2m_changed, post_save, pre_save,post_delete
 
 from utils.exceptions import failure_response_validation
 from utils.handle_file_upload import UploadToPathAndRename
-from django.db.models.signals import post_save
 
-
+from decimal import Decimal
 
 
 class SubmissionProposal(models.Model):
@@ -60,7 +59,7 @@ class SubmissionsProposalApply(models.Model):
     status = models.CharField(max_length=15, choices=STATUS, default='APPLIED')
     submitted_at = models.DateTimeField(auto_now_add=True)
     team = models.ForeignKey('team.Team', related_name='submissions_proposals_apply', on_delete=models.CASCADE)
-    lecturer = models.ForeignKey('account.Lecturer', related_name='submissions_proposals_apply', on_delete=models.CASCADE, blank=True, null=True)
+    # lecturer = models.ForeignKey('account.Lecturer', related_name='submissions_proposals_apply', on_delete=models.CASCADE, blank=True, null=True)
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
     tags = TaggableManager( related_name='submissions_proposals_apply')
@@ -71,6 +70,7 @@ class SubmissionsProposalApply(models.Model):
     
     class Meta:
         verbose_name_plural = 'Proposal Mahasiswa'
+        unique_together = ('team', 'submission',) 
 
     def save(self, *args, **kwargs):
         if not self.category:
@@ -78,21 +78,28 @@ class SubmissionsProposalApply(models.Model):
 
         if not self.slug:
             self.slug = hashlib.sha256(self.title.encode()).hexdigest()[:15]
+
+        if self.submission.title == 'REVISION':
+            # If the application status is also "REVISION", bypass the period check
+            if self.status == 'REVISION':
+                super().save(*args, **kwargs)
+                return
+
+        # Existing logic to fetch the period of the current submission
+        current_period = self.submission.program.period
+
+        # Existing logic to check for existing applications by the same team for any submission within the same period
+        existing_applications = SubmissionsProposalApply.objects.filter(
+            team=self.team,
+            submission__program__period=current_period
+        ).exclude(id=self.id)  # Exclude the current instance to allow updates
+
+        if existing_applications.exists():
+            # If an existing application is found, raise a ValidationError
+            raise ValidationError(f'The team {self.team.name} has already applied for a submission in the period {current_period}.')
+
         super().save(*args, **kwargs)
 
-# class Proposal(models.Model):
-#     team = models.ForeignKey('team.Team', related_name='proposals', on_delete=models.CASCADE, null=True, blank=True)
-#     title = models.CharField(max_length=200)
-#     description = models.TextField()
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     file = models.FileField(upload_to=UploadToPathAndRename(os.path.join('proposals', 'proposal/file')), blank=True, null=True)
-#     tag = TaggableManager(blank=True, related_name='proposals')
-#     class Meta:
-#         verbose_name_plural = '5. Proposal Mahasiswa'
-
-#     def __str__(self):
-#         return f"{self.title} - {self.team.name}"
-    
 
 
 class KeyStageAssesment2(models.Model):
@@ -123,13 +130,24 @@ class KeyStageAssesment1(models.Model):
 
 class LecturerTeamSubmissionApply(models.Model):
     lecturer = models.ForeignKey('account.Lecturer', related_name='team_submission_apply', on_delete=models.CASCADE)
-    submission_apply = models.ManyToManyField(SubmissionsProposalApply, related_name='lecturers')
+    submission_apply = models.ManyToManyField('proposals.SubmissionsProposalApply', related_name='lecturers')
     
     class Meta:
-        
         verbose_name = 'Pembagian Team & Reviewer'
-        
-            
+
+    def clean(self):
+        if self._state.adding or 'lecturer' in self.changed_fields:
+            if LecturerTeamSubmissionApply.objects.filter(lecturer=self.lecturer).exclude(pk=self.pk).exists():
+                raise ValidationError({'lecturer': 'This lecturer is already associated with a team submission and cannot be added to another.'})
+
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  
+        super(LecturerTeamSubmissionApply, self).save(*args, **kwargs)
+        self.submission_apply.set(self.submission_apply.all())
+
+    def __str__(self):
+        return f"Lecturer: {self.lecturer.full_name} - Submissions: {', '.join(str(sub) for sub in self.submission_apply.all())}"  
 class AssesmentSubmissionsProposal(models.Model):
     submission_apply = models.ForeignKey('proposals.SubmissionsProposalApply', related_name='assesments', on_delete=models.CASCADE)
     reviewer = models.ForeignKey('account.Lecturer', related_name='assesments', on_delete=models.CASCADE)
@@ -200,7 +218,7 @@ class StageAssesment2(models.Model):
 
     def __str__(self):
         return f"{self.assesment.submission_apply.submission.title} - {self.key_assesment.title}: {self.score}"
-class AssesmentReport(models.Model):
+class AssesmentReview(models.Model):
     assesment = models.ForeignKey(AssesmentSubmissionsProposal, related_name='assesment_report', on_delete=models.CASCADE)
     comment = models.TextField(blank=True, default='')
     REVISION_CHOICES = [
@@ -212,8 +230,8 @@ class AssesmentReport(models.Model):
     revision = models.CharField(max_length=20, choices=REVISION_CHOICES, default='No Revision')
     reviewed_at = models.DateTimeField(auto_now=True)
     class Meta:
-        verbose_name = 'Laporan Penilaian'
-        verbose_name_plural = 'Laporan Penilaian'
+        verbose_name = 'Review Penilaian'
+        verbose_name_plural = 'Review Penilaian'
     def __str__(self):
         return f"{self.assesment.submission_apply.team.name} - Reviewed by : {self.assesment.reviewer.full_name}"
 
@@ -224,29 +242,101 @@ class AssesmentReport(models.Model):
         else:
             self.assesment.submission_apply.status = SubmissionsProposalApply.STATUS[4][0]
         self.assesment.submission_apply.save()
-        super(AssesmentReport, self).save(*args, **kwargs)
+        super(AssesmentReview, self).save(*args, **kwargs)
+
+
 
     def calculate_final_score(self):
-        final_score = 0
-        for stage_assessment in self.assesment.assessment_values_2.all():
-            presentase_decimal = stage_assessment.key_assesment.presentase / 100
-            final_score += stage_assessment.score * presentase_decimal
+        final_score = Decimal(0)  # Ensure final_score is a Decimal
+        assessments = self.assesment.assessment_values_2.all()
+        print(f"Assessments: {assessments}")  # Debugging
+        for stage_assessment in assessments:
+            presentase_decimal = Decimal(stage_assessment.key_assesment.presentase) / 100
+            final_score += Decimal(stage_assessment.score) * presentase_decimal
         self.final_score = final_score
+        print(f"Calculated Final Score: {final_score}")  # Debugging
 
+class AssessmentReport(models.Model):
+    assessment_submission_proposal = models.OneToOneField(AssesmentSubmissionsProposal, on_delete=models.CASCADE, related_name='assessment_report')
+    stage_assessment_2 = models.ManyToManyField(StageAssesment2, related_name='assessment_report', blank=True)
+    assessment_review = models.OneToOneField(AssesmentReview, on_delete=models.CASCADE, related_name='assessment_report', null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Laporan Penilaian'
+        verbose_name_plural = 'Laporan Penilaian'
+
+    def __str__(self):
+        return f"Report for {self.assessment_submission_proposal.submission_apply.team.name}"
+
+    def calculate_stage_2_average_score(self):
+        # Assuming there can be multiple StageAssessment2 records for a single proposal,
+        # calculate the average score.
+        stage_2_assessments = StageAssesment2.objects.filter(assesment=self.assessment_submission_proposal)
+        if not stage_2_assessments:
+            return 0
+        total_score = sum(assessment.score for assessment in stage_2_assessments)
+        return total_score / stage_2_assessments.count()
+
+
+
+
+@receiver(pre_save, sender=LecturerTeamSubmissionApply)
+def capture_old_values(sender, instance, **kwargs):
+    if instance.pk:
+        old_instance = sender.objects.get(pk=instance.pk)
+        instance._old_lecturer = old_instance.lecturer
+        instance._old_submission_apply = list(old_instance.submission_apply.all())
+
+@receiver(post_save, sender=LecturerTeamSubmissionApply)
+def update_assessments_on_change(sender, instance, created, **kwargs):
+    if created:
+        return  # Skip newly created instances
+
+    # Check if 'lecturer' has changed
+    if hasattr(instance, '_old_lecturer') and instance.lecturer != instance._old_lecturer:
+        # Update assessments with the new lecturer
+        AssesmentSubmissionsProposal.objects.filter(submission_apply__in=instance.submission_apply.all(), reviewer=instance._old_lecturer).update(reviewer=instance.lecturer)
+
+    # Check if 'submission_apply' has changed
+    if hasattr(instance, '_old_submission_apply'):
+        new_submissions = set(instance.submission_apply.all())
+        old_submissions = set(instance._old_submission_apply)
+
+        # Find removed submissions
+        removed_submissions = old_submissions - new_submissions
+        if removed_submissions:
+            AssesmentSubmissionsProposal.objects.filter(submission_apply__in=removed_submissions, reviewer=instance.lecturer).delete()
+
+        # Find added submissions
+        added_submissions = new_submissions - old_submissions
+        for submission in added_submissions:
+            AssesmentSubmissionsProposal.objects.get_or_create(submission_apply=submission, defaults={'reviewer': instance.lecturer})
 
 @receiver(m2m_changed, sender=LecturerTeamSubmissionApply.submission_apply.through)
-def update_assesments(sender, instance, action, **kwargs):
-    if action == 'post_add':
-        for submission in instance.submission_apply.all():
-            assesment, created = AssesmentSubmissionsProposal.objects.get_or_create(submission_apply=submission, defaults={'reviewer': instance.lecturer})
-            if not created:
-                assesment.reviewer = instance.lecturer
-                assesment.save()
-                
-    elif action == 'post_remove':
-        for submission in instance.submission_apply.all():
-            AssesmentSubmissionsProposal.objects.filter(submission_apply=submission, reviewer=instance.lecturer).delete()
-
+def update_assessments(sender, instance, action, reverse, pk_set, **kwargs):
+    if action == "post_add":
+        # Handle the case where submission applies are added to the lecturer team submission
+        for submission_apply_id in pk_set:
+            AssesmentSubmissionsProposal.objects.get_or_create(
+                submission_apply_id=submission_apply_id,
+                reviewer=instance.lecturer
+            )
+    elif action == "post_remove":
+        # Handle the case where submission applies are removed from the lecturer team submission
+        if reverse:
+            for submission_apply_id in pk_set:
+                AssesmentSubmissionsProposal.objects.filter(
+                    submission_apply_id=submission_apply_id,
+                    reviewer=instance.lecturer
+                ).delete()
+    elif action == "post_clear":
+        # Handle the case where all submission applies are removed from the lecturer team submission
+        if reverse:
+            AssesmentSubmissionsProposal.objects.filter(
+                reviewer=instance.lecturer
+            ).delete()
 @receiver(post_save, sender=AssesmentSubmissionsProposal)
 def update_final_score(sender, instance, **kwargs):
     for report in instance.assesment_report.all():

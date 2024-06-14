@@ -72,12 +72,32 @@ class SubmissionProposalApplySerializer(serializers.ModelSerializer, TaggitSeria
         return data
 
 
-    def validate(self, attrs):
+    
 
+    def validate(self, attrs):
+        submission = attrs.get('submission')
+        status = attrs.get('status')
         team = attrs.get('team')
-        if team.status != 'ACTIVE':
-            raise failure_response_validation('Team is not active')
-        applied_submissions = team.submissions_proposals_apply.filter(Q(status='APPLIED') | Q(status='REJECTED'))
-        if applied_submissions.exists():
-            raise failure_response_validation("You can't create a submission for a team that has an applied or rejected submission")
+
+        if submission.title == 'REVISION' and status == 'REVISION':
+            # If both conditions are met, validation passes for REVISION cases
+            return attrs
+
+        # Fetch the period of the current submission
+        current_period = submission.program.period
+
+        # Check for existing applications by the same team for any submission within the same period
+        existing_applications = SubmissionsProposalApply.objects.filter(
+            team=team,
+            submission__program__period=current_period
+        )
+
+        if self.instance:
+            # Exclude the current instance to allow updates
+            existing_applications = existing_applications.exclude(id=self.instance.id)
+
+        if existing_applications.exists():
+            # If an existing application is found, raise a ValidationError
+            raise serializers.ValidationError(f'The team {team.name} has already applied for a submission in the period {current_period}.')
+
         return attrs

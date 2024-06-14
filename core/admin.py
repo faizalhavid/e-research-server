@@ -215,6 +215,7 @@ admin_site.register(LecturerTeamSubmissionApply, LecturerTeamSubmissionApplyAdmi
 admin_site.register(StageAssesment1, StageAssesment1Admin)
 admin_site.register(KeyStageAssesment1, KeyStageAssesment1Admin)
 admin_site.register(StageAssesment2, StageAssesment2Admin)
+admin_site.register(AssessmentReport, AssessmentReportAdmin)
 admin_site.register(KeyStageAssesment2, KeyStageAssesment2Admin)
 admin_site.register(PKMIdeaContribute, PKMIdeaContributeAdmin)
 admin_site.register(PKMIdeaContributeApplyTeam, PKMIdeaContributeApplyTeamAdmin)

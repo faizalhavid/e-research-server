@@ -11,14 +11,23 @@ from apps.proposals.models import *
 @admin.register(LecturerTeamSubmissionApply)
 class LecturerTeamSubmissionApplyAdmin(admin.ModelAdmin):
     model = LecturerTeamSubmissionApply
-    list_display = ('lecturer','submission_information', )
+    list_display = ('lecturer', 'submission_information', )
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if obj:
+            # Filter submission_apply queryset based on the lecturer of the current obj
+            form.base_fields['submission_apply'].queryset = obj.lecturer.submissionsproposalapply_set.all()
+        return form
 
     def submission_information(self, obj):
         submission_info = []
-        for submission in obj.submission_apply.all():
+        related_submissions = obj.submission_apply.all()
+        for submission in related_submissions:
             team = submission.team
             submission_info.append(f"{team.name}")
         return ", ".join(submission_info)
+    
     submission_information.short_description = 'Teams for reviewer'
 
 class SubmissionProposalApplyForm(ModelForm):
@@ -29,7 +38,7 @@ class SubmissionProposalApplyForm(ModelForm):
 @admin.register(SubmissionsProposalApply)
 class SubmissionsProposalApplyAdmin(admin.ModelAdmin):
     model = SubmissionsProposalApply
-    list_display = ('id', 'submission_information', 'lecturer', 'status')
+    list_display = ('id', 'submission_information', 'status')
     search_fields = ('submission__title', 'title', 'status')
     list_display_links = ('id', 'submission_information')
     list_editable = ['status']
@@ -90,6 +99,21 @@ class KeyStageAssesment2Admin(admin.ModelAdmin):
         return ", ".join([category.name for category in obj.category.all()])
     category_display.short_description = 'Categories'  # Optional: Sets the column header
 
+@admin.register(AssessmentReport)
+class AssessmentReportAdmin(admin.ModelAdmin):
+    list_display = ('assessment_submission_proposal', 'created_at', 'updated_at')
+    search_fields = ('assessment_submission_proposal__submission_apply__team__name', 'report_details')
+    readonly_fields = ('assessment_submission_proposal', 'stage_assessment_2', 'assessment_review')
+
+    fieldsets = (
+        (None, {
+            'fields': ('assessment_submission_proposal', 'stage_assessment_2', 'assessment_review',)
+        }),
+    )
+
+    def save_model(self, request, obj, form, change):
+        obj.generate_report_details()  # Assuming generate_report_details is the method to generate report details
+        super().save_model(request, obj, form, change)
 
 class StageAssesment1Form(forms.ModelForm):
 
@@ -164,7 +188,9 @@ class StageAssesment2Inline(admin.TabularInline):
     can_delete = False
 
     def get_formset(self, request, obj=None, **kwargs):
-        key_assesments = KeyStageAssesment2.objects.filter(category=obj.submission_apply.category)
+        if obj is None:
+            return super().get_formset(request, obj, **kwargs)
+        key_assesments = KeyStageAssesment2.objects.filter(category=obj.submission_apply.category) if obj.submission_apply.category else KeyStageAssesment2.objects.none()
         key_assesment_count = key_assesments.count()
         self.extra = key_assesment_count if key_assesment_count > 0 else 1
         self.max_num = key_assesment_count
@@ -196,8 +222,18 @@ class StageAssesment2Inline(admin.TabularInline):
                 kwargs["queryset"] = KeyStageAssesment2.objects.none()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-class AssesmentReportInline(admin.TabularInline):
-    model = AssesmentReport
+class AssesmentReviewForm(forms.ModelForm):
+    class Meta:
+        model = AssesmentReview
+        fields = '__all__'  # Include all fields from the model
+        widgets = {
+            'final_score': forms.TextInput(attrs={'readonly': 'readonly'}),
+        }
+
+# Step 2: Integrate the form with the inline admin
+class AssesmentReviewInline(admin.TabularInline):
+    model = AssesmentReview
+    form = AssesmentReviewForm  # Use the custom form
     extra = 1
     max_num = 1
 
@@ -229,7 +265,7 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
             print("Formset is not valid:", formset.errors)
 
     
-    inlines = [StageAssesment1Inline, StageAssesment2Inline, AssesmentReportInline]
+    inlines = [StageAssesment1Inline, StageAssesment2Inline, AssesmentReviewInline]
     change_form_template = 'admin/assesmentProposal/assesmentForm.html'
     list_display = ('submission_information', 'status_colored', 'reviewer', 'reviewed_at')
     list_editable = ('reviewer',)

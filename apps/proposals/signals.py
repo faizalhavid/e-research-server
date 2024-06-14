@@ -2,7 +2,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from apps.notification.models import Notification
-from apps.proposals.models import SubmissionsProposalApply
+from apps.proposals.models import AssesmentReview, AssesmentSubmissionsProposal, AssessmentReport, StageAssesment1, StageAssesment2, SubmissionsProposalApply
 from apps.team.models import Team
 from django.db import transaction
 
@@ -56,3 +56,38 @@ def submission_proposal_apply_notification(sender, instance, created, **kwargs):
     
     # Bulk create notifications
     Notification.objects.bulk_create(notifications, ignore_conflicts=True)
+
+
+
+ 
+    
+# @receiver(post_save, sender=StageAssesment1)
+# def create_or_update_report_from_stage1(sender, instance, created, **kwargs):
+#     # Logic to create or update AssessmentReport
+#     report, _ = AssessmentReport.objects.get_or_create(assessment_submission_proposal=instance.assesment,
+#                                                         defaults={'stage_assessment_1': instance})
+#     report.generate_report_details()
+
+@receiver(post_save, sender=AssesmentSubmissionsProposal)
+def create_assessment_report(sender, instance, created, **kwargs):
+    if created:
+        AssessmentReport.objects.get_or_create(assessment_submission_proposal=instance)
+
+
+@receiver(post_save, sender=StageAssesment2)
+def update_assessment_report_from_stage2(sender, instance, created, **kwargs):
+    if created:
+        # Retrieve the AssessmentReport instance(s) related to the StageAssesment2 instance.
+        assessment_reports = AssessmentReport.objects.filter(assessment_submission_proposal=instance.assesment)
+        
+        # Check if there are any AssessmentReport instances and the status condition.
+        if assessment_reports.exists() and (instance.assesment.submission_apply.status not in ['REJECTED', 'REVISION']):
+            for assessment_report in assessment_reports:
+                # Add the StageAssesment2 instance to the ManyToManyField relation.
+                assessment_report.stage_assessment_2.add(instance)
+@receiver(post_save, sender=AssesmentReview)
+def update_assessment_report_from_review(sender, instance, created, **kwargs):
+    if created:
+        current_assessment = AssessmentReport.objects.filter(assessment_submission_proposal=instance.assesment)
+        if current_assessment.exists() and (instance.assesment.submission_apply.status != 'REJECTED' or instance.assesment.submission_apply.status != 'REVISION'):
+            current_assessment.update(assessment_review=instance)

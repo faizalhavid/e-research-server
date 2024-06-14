@@ -317,6 +317,7 @@ JAZZMIN_SETTINGS = {
         "proposals.KeyStageAssesment1": "fas fa-file-contract",
         "proposals.KeyStageAssesment2": "fas fa-file-contract",
         "proposals.LecturerTeamSubmissionApply": "fas fa-share-alt",
+        "proposals.AssesmentReport": "fas fa-file-contract",
         
         "pkm.PKMProgram": "fas fa-award",
         "pkm.PKMIdeaContribute": "fas fa-lightbulb",
