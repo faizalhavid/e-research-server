@@ -51,8 +51,8 @@ jobs:
         push: true
         tags: nurhavid1/e-research-server:latest 
 
-    - name: Clean up unused Docker images
-      run: docker rmi $(docker images -f "dangling=true" -q)
+    # - name: Clean up unused Docker images
+    #   run: docker rmi $(docker images -f "dangling=true" -q)
 
 
     - name: SSH into server and deploy
@@ -71,8 +71,8 @@ jobs:
           docker rm e-research-container || true
           
           
-          # Pull the latest image
-          docker pull nurhavid1/e-research-server:latest
+          # # Pull the latest image
+          # docker pull nurhavid1/e-research-server:latest
           
           # Remove exited containers to avoid conflicts
           docker container prune -f
