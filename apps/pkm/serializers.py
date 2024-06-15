@@ -42,6 +42,24 @@ class PKMIdeaContributeSerializer(TaggitSerializer,serializers.ModelSerializer):
         validated_data['user'] = user
         return super().create(validated_data)
     
+    def validate(self, attrs):
+        user = self.context['request'].user
+        slug = attrs.get('slug')
+        max_contributions = 5
+
+
+        # Count the number of existing contributions by this user
+        contributions_count = PKMIdeaContribute.objects.filter(user=user).count()
+
+        if contributions_count >= max_contributions:
+            raise failure_response_validation(f"User has reached the maximum number of contributions ({max_contributions})")
+        
+        # Check if slug is unique
+        if PKMIdeaContribute.objects.filter(slug=slug).exists():
+            raise failure_response_validation("Title has already been used for another idea contribute")
+
+        return attrs
+    
     def get_team(self, obj):
         try:
             idea_team_apply = obj.apply_teams.get(status='A')

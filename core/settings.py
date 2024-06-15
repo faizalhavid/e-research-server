@@ -30,6 +30,12 @@ BASE_URL = config('BASE_URL', default='http://localhost:8000')
 ALLOWED_HOSTS = ['e-research-be3e0f7d5e0d.nevacloud.io', 'localhost','127.0.0.1']
 
 
+CKEDITOR_CONFIGS = {
+    "default": {
+        "removePlugins": "stylesheetparser",
+    }
+}
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -196,87 +202,9 @@ SESSION_COOKIE_AGES = 60 * 60 * 24 * 7 # 7 days
 #     },
 # }
 
-# TEMPLATE, MEDIA AND STATIC
-# STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-STATIC_DIR = BASE_DIR / 'static'
-if not os.path.exists(STATIC_DIR):
-    os.makedirs(STATIC_DIR)
-
-STATICFILES_DIRS = [
-    STATIC_DIR,
-]
-# MEDIA_ROOT = BASE_DIR / 'media'
-# MEDIA_URL = '/media/'
-STATICFILES_FINDERS = (
-    "django.contrib.staticfiles.finders.FileSystemFinder",
-    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    # 'compressor.finders.CompressorFinder',
-)
-
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
 
 
-# JAZZMIN_SETTINGS = {
-#     'site_header': "Desphixs",
-#     'site_brand': "No1 Digital Marketplace for everyone.",
-#     'site_logo': "assets/imgs/logo.png",
-#     'copyright':  "All Right Reserved 2023",
-#     "welcome_sign": "Welcome to Desphixs, Login Now.",
-    
-#     "topmenu_links": [
-#         {"name": "Home",  "url": "admin:index", "permissions": ["auth.view_user"]},
-#         {"name": "Company", "url": "/admin/addons/company/"},
-#         {"name": "Users", "url": "/admin/userauths/user/"},
-#     ],
 
-#     "order_with_respect_to": [
-#         # replace with your own models
-#         "store",
-#         "store.product",
-#         "store.cartorder",
-#         "store.cartorderitem",
-#         "store.category",
-#         "store.brand",
-#         "store.productfaq",
-#         "store.productoffers",
-#         "store.productbidders",
-#         "store.review",
-#         "vendor",
-#         "userauths"
-#         "addons",
-#         "addons.Company",
-#         "addons.BasicAddon"
-#     ],
-    
-#     "icons": {
-#         # replace with your own model & icon 
-#         "admin.LogEntry": "fas fa-file",
-
-#         "auth": "fas fa-users-cog",
-#         "auth.user": "fas fa-user",
-
-#         "userauths.User": "fas fa-user",
-#         "userauths.Profile":"fas fa-address-card",
-
-#     },
-#     "show_ui_builder" : True
-# }
 
 
 JAZZMIN_SETTINGS = {
@@ -409,41 +337,9 @@ JAZZMIN_SETTINGS = {
     },
 }
 
-# JAZZMIN_UI_TWEAKS = {
-#     "navbar_small_text": False,
-#     "footer_small_text": False,
-#     "body_small_text": False,
-#     "brand_small_text": False,
-#     "brand_colour": "navbar-info",
-#     "accent": "accent-info",
-#     "navbar": "navbar-info navbar-dark",
-#     "no_navbar_border": False,
-#     "navbar_fixed": False,
-#     "layout_boxed": False,
-#     "footer_fixed": False,
-#     "sidebar_fixed": False,
-#     "sidebar": "sidebar-dark-primary",
-#     "sidebar_nav_small_text": True,
-#     "sidebar_disable_expand": False,
-#     "sidebar_nav_child_indent": False,
-#     "sidebar_nav_compact_style": False,
-#     "sidebar_nav_legacy_style": False,
-#     "sidebar_nav_flat_style": True,
-#     "theme": "cyborg",
-#     "dark_mode_theme": "darkly",
-#     "button_classes": {
-#         "primary": "btn-primary",
-#         "secondary": "btn-secondary",
-#         "info": "btn-info",
-#         "warning": "btn-warning",
-#         "danger": "btn-danger",
-#         "success": "btn-success"
-#     },
-#     "actions_sticky_top": True
-# }
-
 
 # AWS
+AWS_QUERYSTRING_AUTH = False
 AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
@@ -456,12 +352,45 @@ AWS_LOCATION = 'static'
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
-STATIC_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_LOCATION}/'
+STATIC_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_LOCATION}/static/'
 STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # MEDIA AWS
 MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/media/'
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+
+# TEMPLATE, MEDIA AND STATIC
+# STATIC_URL = '/static/'
+
+
+# MEDIA_ROOT = BASE_DIR / 'media'
+# MEDIA_URL = '/media/'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+STATICFILES_FINDERS = (
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    # 'compressor.finders.CompressorFinder',
+)
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 
 # SSL

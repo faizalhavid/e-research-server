@@ -37,7 +37,7 @@ class Notice(models.Model):
 
 class Article(models.Model):
     title = models.CharField(max_length=100)
-    author = models.ForeignKey('account.User', on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'is_staff': True})
     created = models.DateTimeField(auto_now_add=True)
     image = models.ImageField(upload_to='articles/', default='articles/default.jpg', blank=True, null=True)
     excerpt = models.TextField(blank=True, null=True,verbose_name='kutipan')
@@ -50,7 +50,7 @@ class Article(models.Model):
     likes = models.IntegerField(default=0, blank=True, null=True)
     view = models.IntegerField(default=0, blank=True, null=True)
     content = RichTextField()
-    slug = models.SlugField(unique=True, blank=True, null=True)
+    slug = models.SlugField(unique=True, blank=True, null=True, max_length=100)
 
     def __str__(self):
         return self.title
