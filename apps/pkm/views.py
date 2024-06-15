@@ -29,15 +29,6 @@ class PKMActivityScheduleViewSet(viewsets.GenericViewSet, mixins.ListModelMixin,
     filterset_class = PKMActivityScheduleFilter
     search_fields = ['title', 'description']
 
-class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
-    queryset = PKMActivitySchedule.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = PKMActivityScheduleSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    search_fields = ['title', 'description']
-
-    def get_queryset(self):
-        return PKMActivitySchedule.objects.filter(title='PKM Idea Contribute')
 
 
 class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
