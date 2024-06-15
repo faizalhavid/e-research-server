@@ -3,16 +3,40 @@ from rest_framework import serializers
 from .models import Notice, Article, Comment
 
 class NoticeSerializer(serializers.ModelSerializer):
+    content = serializers.CharField()
     class Meta:
         model = Notice
         fields = '__all__'
 
+    def validate_content(self, value):
+        allowed_tags = [
+            'a', 'b', 'blockquote', 'em', 'i', 'li', 'ol', 'p', 'strong', 'ul', 'img'
+        ]
+        allowed_attributes = {
+            '*': ['class', 'style'],
+            'a': ['href', 'rel'],
+            'img': ['src', 'alt'],
+        }
+        return bleach.clean(value, tags=allowed_tags, attributes=allowed_attributes)
+    
 class ArticleSerializer(serializers.ModelSerializer):
-    content = serializers.CharField()
+    content = serializers.CharField(read_only=True)
     author = serializers.SerializerMethodField()
     class Meta:
         model = Article
         fields = '__all__'
+        extra_kwargs = {
+            'slug': {'read_only': True},
+            'excerpt': {'read_only': True},
+            'view': {'read_only': True},
+            'tags': {'read_only': True},
+            'title': {'write_only': True},
+            'status': {'read_only': True},
+            'created': {'read_only': True},
+            'image': {'read_only': True},
+            'author': {'read_only': True},
+            'content': {'read_only': True},
+        }
 
     def get_author(self, obj):
         return obj.author.username
