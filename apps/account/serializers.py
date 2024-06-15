@@ -37,7 +37,7 @@ class MajorSerializer(serializers.ModelSerializer):
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Departement
-        fields = [ 'name','abbreviation']
+        fields = [ 'name','abbreviation','color']
 
 class StudentSerializer(serializers.ModelSerializer):
     major = MajorSerializer(read_only=True)

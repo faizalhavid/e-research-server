@@ -171,8 +171,8 @@ def pkm_idea_contribute_team_owner_notification(sender, instance, created, **kwa
         
         # Create a Notification instance
         Notification.objects.create(
-            user=instance.owner,
-            message=f"Your PKM Idea Contribute Apply Team '{instance.name}' has been created.",
+            user=instance.team.leader.user,
+            message=f"Your PKM Idea Contribute Apply Team '{instance.idea_contribute.title}' has been created.",
             content_type=content_type,
             object_id=instance.id
         )
