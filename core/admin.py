@@ -35,6 +35,7 @@ class EReasearchAdminSite(admin.AdminSite, AdminChartMixin):
     site_url = 'http://localhost:3000'
     
     
+    
     def index(self, request: WSGIRequest, extra_context=None):
         color = [
             {

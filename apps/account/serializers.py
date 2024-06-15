@@ -179,10 +179,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     user_type = serializers.ChoiceField(choices=USER_TYPE_CHOICES, default='guest')
     nrp = serializers.CharField(required=False)
     agency = serializers.CharField(required=False)
+    birth_date = serializers.DateField(required=False)
     
     class Meta:
         model = User
-        fields = ('id', 'email', 'password', 'password2', 'first_name', 'last_name','user_type','nrp','agency')
+        fields = ('id', 'email', 'password', 'password2', 'first_name', 'last_name','user_type','nrp','agency','birth_date')
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True},
@@ -228,7 +229,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        agency=validated_data.get('agency', None),  
+        birth_date = validated_data.get('birth_date', None)
+        agency=validated_data.get('agency', None)
         user = User(
             email=validated_data['email'],
             first_name=validated_data['first_name'],
@@ -246,6 +248,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             existing_student = Student.objects.filter(nrp=nrp).first()
             if existing_student:
                 existing_student.user = user
+                existing_student.birth_date = birth_date
                 existing_student.save()
             else:
                 return failure_response_validation('Your data as Student is not found', 'validation')
@@ -262,7 +265,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         #         return failure_response_validation('Your data as Lecturer is not found', 'validation')
         elif validated_data['user_type'] == 'guest':
             user_group = Group.objects.get(name='Guest')
-            Guest.objects.create(user=user, agency=agency)
+            Guest.objects.create(user=user, agency=agency, birth_date=birth_date)
         
         user.groups.add(user_group)
         return user

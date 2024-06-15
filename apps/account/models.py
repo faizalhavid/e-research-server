@@ -154,6 +154,11 @@ class Guest(UserProfile):
 
     def __str__(self):
         return self.full_name
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.full_name :
+            self.full_name = self.user.first_name + ' ' + self.user.last_name
 
 
 

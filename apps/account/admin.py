@@ -98,8 +98,8 @@ class StudentModelResource(resources.ModelResource):
 
 @admin.register(Guest)
 class GuestAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'agency')
-    search_fields = ('full_name', 'agency')
+    list_display = ('id','full_name', 'agency')
+    search_fields = ('id','full_name', 'agency')
     list_per_page = 15
     ordering = ('full_name',)
     readonly_fields = ('guest_image',)
