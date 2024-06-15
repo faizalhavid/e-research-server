@@ -5,6 +5,8 @@ from django.utils.text import slugify
 from taggit.managers import TaggableManager
 from django.contrib.postgres.fields import ArrayField
 
+from utils.exceptions import failure_response_validation
+
 class PKMProgram(models.Model):
     period = models.IntegerField()
     due_date = models.DateTimeField()
@@ -43,7 +45,7 @@ class PKMScheme(models.Model):
     
 class PKMIdeaContribute(models.Model):
     user = models.ForeignKey('account.User', on_delete=models.CASCADE, related_name='idea_contributes')
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=100,unique=True)
     description = models.TextField(blank=True, default='')
     created = models.DateTimeField(auto_now_add=True)
     problem = ArrayField(models.CharField(max_length=200), blank=True, default=list)
@@ -62,17 +64,26 @@ class PKMIdeaContribute(models.Model):
     applied_date = models.DateTimeField(blank=True, null=True)
     
     class Meta:
-        verbose_name = 'Idea Contribute'
-        verbose_name_plural = 'Idea Contribute'
+        verbose_name = 'Bank Judul'
+        verbose_name_plural = 'Bank Judul'
+        ordering = ['-created']
     def __str__(self):
         return self.title
     
+    def clean(self):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        if PKMIdeaContribute.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
+            raise failure_response_validation('Title already exists',status_code=400)
+
     def save(self, *args, **kwargs):
+        self.clean()
+        super(PKMIdeaContribute, self).save(*args, **kwargs)
         if not self.slug:
             self.slug = slugify(self.title)
         if self.status == 'P' and not self.applied_date:
             self.applied_date = timezone.now()
-        super().save(*args, **kwargs)
+        super(PKMIdeaContribute, self).save(*args, **kwargs)
 
 
 
