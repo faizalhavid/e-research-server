@@ -40,14 +40,8 @@ class ArticleViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=200)
     
-    
     def get_queryset(self):
         return Article.objects.filter(status='P').order_by('-created', '-view', '-likes')
-    
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data, status=200)
     
     def update(self, request, *args, **kwargs):
         return Response({'message': 'Method Not Allowed'}, status=405)

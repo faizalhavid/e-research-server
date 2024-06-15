@@ -52,8 +52,7 @@ jobs:
         tags: nurhavid1/e-research-server:latest 
 
     - name: Clean up unused Docker images
-      run: docker image prune -a --force
-
+      run: docker rmi $(docker images -f "dangling=true" -q)
 
 
     - name: SSH into server and deploy
