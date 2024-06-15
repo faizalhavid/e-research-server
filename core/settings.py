@@ -27,8 +27,7 @@ DEBUG = config('DEBUG', default='TRUE', cast=bool)
 DEBUG = True
 BASE_URL = config('BASE_URL', default='http://localhost:8000')
 
-ALLOWED_HOSTS = ['*']
-DJANGO_ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['e-research-be3e0f7d5e0d.nevacloud.io', 'localhost']
 
 
 # Application definition
