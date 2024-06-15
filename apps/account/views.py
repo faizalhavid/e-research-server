@@ -84,7 +84,7 @@ class Register(generics.CreateAPIView):
             return success_response(**response_data, status_code=status.HTTP_201_CREATED)
         
         except SMTPException as e:
-            print('Error: ', e)
+            ('Error: ', e)
             return failure_response('Email could not be sent', status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 User = get_user_model()
@@ -100,7 +100,7 @@ class AccountActivation(generics.GenericAPIView):
                 acc_filter = User.objects.filter(
                     id=user_id, string_activation=uuid).exists()
 
-                print(acc_filter,acc.is_active )
+                (acc_filter,acc.is_active )
                 if acc_filter and acc.is_active == False:
                     acc.is_active = True
                     acc.save()
@@ -171,7 +171,7 @@ class ForgetPasswordMail(generics.CreateAPIView):
         user.string_activation=uuid.uuid4()
         user.save()
         htmly = get_template('email_forget_pass.html')
-        print(user.string_activation)
+        (user.string_activation)
         c = {
             'email': user.email,
             'first_name': user.first_name,
@@ -233,7 +233,7 @@ class RefreshTokenView(generics.CreateAPIView):
                 token = RefreshToken(refresh_token)
                 return success_response('Token refreshed successfully', {'access': str(token.access_token)})
             except Exception as e:
-                print('Error: ', e)
+                ('Error: ', e)
         return failure_response('Token could not be refreshed', status.HTTP_400_BAD_REQUEST)
     
 # class LogoutView(generics.GenericAPIView):

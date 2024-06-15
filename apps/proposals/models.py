@@ -254,12 +254,12 @@ class AssesmentReview(models.Model):
     def calculate_final_score(self):
         final_score = Decimal(0)  # Ensure final_score is a Decimal
         assessments = self.assesment.assessment_values_2.all()
-        print(f"Assessments: {assessments}")  # Debugging
+        (f"Assessments: {assessments}")  # Debugging
         for stage_assessment in assessments:
             presentase_decimal = Decimal(stage_assessment.key_assesment.presentase) / 100
             final_score += Decimal(stage_assessment.score) * presentase_decimal
         self.final_score = final_score
-        print(f"Calculated Final Score: {final_score}")  # Debugging
+        (f"Calculated Final Score: {final_score}")  # Debugging
 
 class AssessmentReport(models.Model):
     assessment_submission_proposal = models.OneToOneField(AssesmentSubmissionsProposal, on_delete=models.CASCADE, related_name='assessment_report')

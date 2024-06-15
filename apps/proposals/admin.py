@@ -156,7 +156,7 @@ class AssessmentReportResource(resources.ModelResource):
                 # Create a dynamic method to fetch score
                 setattr(self, attribute_name, self.create_dynamic_method(assessment))
                 dynamic_method = self.create_dynamic_method(assessment)
-                print(dynamic_method)
+                (dynamic_method)
                 # Add dynamic field to fields dictionary
                 self.dynamic_columns[column_name] = DynamicMethodField(
                     dynamic_method=dynamic_method,
@@ -392,7 +392,7 @@ class StageAssesment2Inline(admin.TabularInline):
         key_assesment_count = key_assesments.count()
         self.extra = key_assesment_count if key_assesment_count > 0 else 1
         self.max_num = key_assesment_count
-        print(key_assesment_count, self.extra, self.max_num)
+        (key_assesment_count, self.extra, self.max_num)
     
         initial = [{'key_assesment': key_assesment.id} for key_assesment in key_assesments]
         formset_class = super().get_formset(request, obj, **kwargs)
@@ -453,15 +453,15 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
             for instance in instances:
                 # Ensure all required fields are set or have defaults
                 instance.assesment = form.instance
-                # Debugging: Print or log instance to ensure it's correct
-                print("Saving instance:", instance)
+                # Debugging:  or log instance to ensure it's correct
+                ("Saving instance:", instance)
                 instance.save()
             # Save many-to-many fields
             formset.save_m2m()
             super().save_formset(request, form, formset, change)
         else:
-            # Debugging: Print or log formset errors
-            print("Formset is not valid:", formset.errors)
+            # Debugging:  or log formset errors
+            ("Formset is not valid:", formset.errors)
 
     
     inlines = [StageAssesment1Inline, StageAssesment2Inline, AssesmentReviewInline]
@@ -508,7 +508,7 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
 
     def submission_information(self, obj):
         submission = obj.submission_apply
-        print(submission)
+        (submission)
         team = submission.team
         proposal = submission.title
         if proposal is None:  # Check if proposal is not None

@@ -2,13 +2,15 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from apps.account.models import Lecturer, Student
-from apps.account.serializers import LecturerSerializer
+from apps.account.serializers import DepartmentSerializer, LecturerSerializer, MajorSerializer
 from apps.team.models import Team, TeamApply, TeamTask, TeamVacancies
 from utils.exceptions import failure_response_validation
 from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
 
 class MemberSerializers(serializers.ModelSerializer):
+    department = DepartmentSerializer(read_only=True)
+    major= MajorSerializer(read_only=True)
     class Meta:
         model = Student
         fields = '__all__'
@@ -27,7 +29,7 @@ class TeamSerializer(serializers.ModelSerializer):
     
     def get_user_role(self, obj):
         user = self.context['request'].user
-        print(obj.leader.user_id, user.id,obj.name)
+        
         if obj.leader.user_id == user.id:
             return 'leader'
         elif user.id in obj.members.values_list('user_id', flat=True):

@@ -37,10 +37,10 @@ class TagFilter(django_filters.FilterSet):
         if value:
     
             model_name = self.request.GET.get('leads')
-            print(model_name)
+            (model_name)
             if model_name:
                 content_type = get_object_or_404(ContentType, model=model_name.lower())
-                print(content_type)
+                (content_type)
                 # Filter TaggedItem instances by this content type
                 queryset = queryset.filter(taggit_taggeditem_items__content_type=content_type)
             

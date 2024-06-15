@@ -56,7 +56,7 @@ class AuthTests(TestCase):
                 data['nrp'] = self.test_student_nrp
             response = self.client.post(reverse('register'), data=data)
             if response.status_code != status.HTTP_201_CREATED:
-                print(response.data) 
+                (response.data) 
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             self.otp = response.data['data']['otp'] 
 
