@@ -66,6 +66,9 @@ jobs:
           docker stop e-research-container || true
           docker rm e-research-container || true
           
+          # Remove exited containers to avoid conflicts
+          docker container prune -f
+          
           # Pull the latest image
           docker pull nurhavid1/e-research-server:latest
           
