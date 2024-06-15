@@ -15,10 +15,12 @@ from apps.account.serializers import *
 from utils.exceptions import failure_response, success_response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
+from rest_framework.authentication import TokenAuthentication
 
 class LoginToken(generics.CreateAPIView):
     serializer_class = LoginSerializer
     permission_classes = [permissions.AllowAny]
+    authentication_classes = (TokenAuthentication,)
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})
