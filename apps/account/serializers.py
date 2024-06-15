@@ -51,7 +51,7 @@ class StudentSerializer(serializers.ModelSerializer):
 
 class LecturerSerializer(serializers.ModelSerializer):  
     # mentor_team = serializers.SerializerMethodField()
-    department = serializers.PrimaryKeyRelatedField(queryset=Departement.objects.all(), required=False)
+    department = DepartmentSerializer(read_only=True,many=False)
     nidn = serializers.CharField(required=False)
 
     class Meta:
