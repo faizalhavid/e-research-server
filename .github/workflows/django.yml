@@ -69,8 +69,8 @@ jobs:
           # Pull the latest image
           docker pull nurhavid1/e-research-server:latest
           
-          # Run the new container attached to the network
-          docker run -d --name e-research-container --network e-research-network nurhavid1/e-research-server:latest
+          # Run the new container attached to the network and expose port 8000
+          docker run -d --name e-research-container --network e-research-network -p 8000:8000 nurhavid1/e-research-server:latest
 
     - name: Notify via Telegram on Success
       if: success()
