@@ -4,7 +4,7 @@ from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMIdeaContr
 from rest_framework import serializers
 from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
-from django.db.models import Q
+
 
 from apps.team.models import Team
 from apps.team.serializers import TeamSerializer

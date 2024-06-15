@@ -71,9 +71,13 @@ jobs:
           docker stop e-research-container || true
           docker rm e-research-container || true
           
-          
           # Pull the latest image
           docker pull nurhavid1/e-research-server:latest
+          
+          # Cleanup old images
+          docker image prune -af --filter="until=24h"
+          # Or for a more targeted approach, remove old versions of the pulled image
+          # docker images | grep 'nurhavid1/e-research-server' | grep -v 'latest' | awk '{print $3}' | xargs -r docker rmi
           
           # Remove exited containers to avoid conflicts
           docker container prune -f

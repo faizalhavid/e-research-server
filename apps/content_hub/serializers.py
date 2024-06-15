@@ -1,6 +1,8 @@
 import bleach
 from rest_framework import serializers
 from .models import Notice, Article, Comment
+from taggit.serializers import (TagListSerializerField,
+                                TaggitSerializer)
 
 class NoticeSerializer(serializers.ModelSerializer):
     content = serializers.CharField()
@@ -19,7 +21,8 @@ class NoticeSerializer(serializers.ModelSerializer):
         }
         return bleach.clean(value, tags=allowed_tags, attributes=allowed_attributes)
     
-class ArticleSerializer(serializers.ModelSerializer):
+class ArticleSerializer(TaggitSerializer,serializers.ModelSerializer):
+    tags = TagListSerializerField()
     content = serializers.CharField(read_only=True)
     author = serializers.SerializerMethodField()
     class Meta:
