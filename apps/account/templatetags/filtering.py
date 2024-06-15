@@ -14,3 +14,7 @@ def get_tuple_item(value, arg):
         return value[arg]
     except (IndexError, TypeError):
         return None
+    
+@register.filter
+def to_range(value):
+    return range(value)

@@ -1,0 +1,32 @@
+<!-- templates/admin/yourapp/assessmentreport/change_list.html -->
+{% extends "admin/change_list.html" %}
+{% load filtering %}
+{% load i18n %}
+
+{% block extrastyle %}
+<style>
+    table#result_list {
+        width: auto; /* Adjust this as needed */
+        background-color: #f9f9f9;
+        table-layout: auto; /* Ensures table width follows the content */
+    }
+    table#result_list th {
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}
+
+{% block result_headers %}
+    <tr>
+        <th scope="col"><input type="checkbox" id="action-toggle"></th>
+        <th scope="col" class="column-get_submission_apply_title sortable"><a href="?o=1">{% trans 'Submission Apply Title' %}</a></th>
+        <th scope="col" class="column-get_leader_info sortable"><a href="?o=2">{% trans 'Leader Info' %}</a></th>
+        <th scope="col" class="column-get_degree_leader sortable"><a href="?o=3">{% trans 'Degree Leader' %}</a></th>
+        <th scope="col" class="column-get_major_leader sortable"><a href="?o=4">{% trans 'Major Leader' %}</a></th>
+        {% for i in extra_context.max_assessments|to_range %}
+            <th scope="col" class="column-assessment_title_{{ forloop.counter }} sortable"><a href="#">{% trans assessments|get_item:i %}</a></th>
+        {% endfor %}
+        <th scope="col" class="column-get_final_score sortable"><a href="?o=5">{% trans 'Final Score' %}</a></th>
+        <th scope="col" class="column-get_reviewer_info sortable"><a href="?o=6">{% trans 'Reviewer Info' %}</a></th>
+    </tr>
+{% endblock %}

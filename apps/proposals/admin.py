@@ -4,21 +4,22 @@ from django.forms import BaseInlineFormSet, ModelForm, model_to_dict
 from apps.account.models import Lecturer
 from django.utils.html import format_html
 from apps.proposals.models import *
-
-
-
+from django.db.models import Count, Max
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
+import json  # Make sure this import is at the top of your file
 
 @admin.register(LecturerTeamSubmissionApply)
 class LecturerTeamSubmissionApplyAdmin(admin.ModelAdmin):
     model = LecturerTeamSubmissionApply
     list_display = ('lecturer', 'submission_information', )
 
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        if obj:
-            # Filter submission_apply queryset based on the lecturer of the current obj
-            form.base_fields['submission_apply'].queryset = obj.lecturer.submissionsproposalapply_set.all()
-        return form
+    # def get_form(self, request, obj=None, **kwargs):
+    #     form = super().get_form(request, obj, **kwargs)
+    #     if obj:
+    #         # Filter submission_apply queryset based on the lecturer of the current obj
+    #         form.base_fields['submission_apply'].queryset = obj.lecturer.submissionsproposalapply_set.all()
+    #     return form
 
     def submission_information(self, obj):
         submission_info = []
@@ -99,9 +100,174 @@ class KeyStageAssesment2Admin(admin.ModelAdmin):
         return ", ".join([category.name for category in obj.category.all()])
     category_display.short_description = 'Categories'  # Optional: Sets the column header
 
+
+from import_export import fields, resources
+
+class DynamicMethodField(fields.Field):
+    def __init__(self, dynamic_method, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dynamic_method = dynamic_method
+
+    def get_value(self, obj):
+        return self.dynamic_method(obj)
+    
+
+class AssessmentReportResource(resources.ModelResource):
+    def __init__(self, *args, **kwargs):
+        super(AssessmentReportResource, self).__init__(*args, **kwargs)
+        self.row_number = 0
+        self.dynamic_columns = {}
+
+    stage_2_average_score = fields.Field(column_name='Rata rata nilai')
+    stage_2_final_score =  fields.Field(column_name='Jumlah nilai')
+    stage_2_comment = fields.Field(column_name='Komentar Reviewer')
+    number = fields.Field(column_name='number', attribute=None)
+    get_submission_apply_title = fields.Field(attribute='get_submission_apply_title', column_name='Judul PKM')
+    get_degree_leader = fields.Field(attribute='get_degree_leader', column_name='Jenjang')
+    get_major_leader = fields.Field(attribute='get_major_leader', column_name='Prodi')
+    get_final_score = fields.Field(attribute='get_final_score', column_name='Final Score')
+    get_leader_info = fields.Field(attribute='get_leader_info', column_name='Nama Ketua - NRP')
+    get_reviewer_info = fields.Field(attribute='get_reviewer_info', column_name='Reviewer Info')
+
+    def dehydrate_stage_2_comment(self, assessment_report):
+        return assessment_report.assessment_review.comment
+
+    def dehydrate_stage_2_average_score(self, assessment_report):
+        return assessment_report.calculate_stage_2_average_score()
+
+    def dehydrate_stage_2_final_score(self, assessment_report):
+        return assessment_report.assessment_review.final_score                     
+
+    def create_dynamic_method(self, assessment):
+        def dynamic_method(*args, **kwargs):
+            # Return the score of the assessment captured by the closure
+            return assessment.score
+        return dynamic_method
+
+    def before_export(self, queryset, *args, **kwargs):
+        # Iterate through objects to dynamically add stage_assessment_2 columns
+        for obj in queryset:
+            for assessment in obj.stage_assessment_2.all():  # Iterate over related objects
+                key_title = assessment.key_assesment.title
+                presentence = assessment.key_assesment.presentase
+                column_name = f"{key_title} {presentence}"
+                attribute_name = f"dehydrate_stage_assessment_2_{assessment.pk}"
+
+                # Create a dynamic method to fetch score
+                setattr(self, attribute_name, self.create_dynamic_method(assessment))
+                dynamic_method = self.create_dynamic_method(assessment)
+                print(dynamic_method)
+                # Add dynamic field to fields dictionary
+                self.dynamic_columns[column_name] = DynamicMethodField(
+                    dynamic_method=dynamic_method,
+                    column_name=column_name
+                )
+
+        self.fields.update(self.dynamic_columns)
+            
+   
+
+
+    # Define methods to get custom field values
+    def dehydrate_get_submission_apply_title(self, obj):
+        return obj.assessment_submission_proposal.submission_apply.title
+
+    def dehydrate_get_degree_leader(self, obj):
+        return obj.assessment_submission_proposal.submission_apply.team.leader.degree
+
+    def dehydrate_get_major_leader(self, obj):
+        # Assuming the Major model has a 'name' attribute
+        return obj.assessment_submission_proposal.submission_apply.team.leader.major.name
+
+    def dehydrate_get_final_score(self, obj):
+        return obj.assessment_review.final_score
+
+    def dehydrate_get_leader_info(self, obj):
+        leader = obj.assessment_submission_proposal.submission_apply.team.leader
+        return f"{leader.full_name} - {leader.nrp}"
+
+    def dehydrate_get_reviewer_info(self, obj):
+        lecturer = obj.assessment_submission_proposal.reviewer
+        return f"{lecturer.full_name} / "
+
+    def dehydrate_number(self, obj):
+        self.row_number += 1  # Increment the counter
+        return self.row_number
+
+    class Meta:
+        model = AssessmentReport
+        fields = ('number', 'get_submission_apply_title', 'get_degree_leader', 'get_major_leader', 'get_final_score', 'get_leader_info', 'get_reviewer_info',)
+        export_order = ('number', 'get_submission_apply_title','get_leader_info' ,'get_degree_leader', 'get_major_leader', 'get_final_score', 'get_reviewer_info',)
+        
+        def get_queryset(self):
+        # Override this method if you need to filter the records being exported
+            return self._meta.model.objects.all()
+
+        # Override import_data to prevent any import operations
+        def import_data(self, dataset, dry_run=False, raise_errors=False, use_transactions=None, collect_failed_rows=False, **kwargs):
+            raise NotImplementedError("Importing is not allowed")
+
 @admin.register(AssessmentReport)
-class AssessmentReportAdmin(admin.ModelAdmin):
-    list_display = ('assessment_submission_proposal', 'created_at', 'updated_at')
+class AssessmentReportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    resource_class = AssessmentReportResource
+    list_display = (
+        'get_submission_apply_title', 
+        'get_leader_info', 
+        'get_degree_leader', 
+        'get_major_leader', 
+        'get_final_score', 
+        'get_reviewer_info',
+        'display_stage_2_average_score',  
+    )
+
+    change_list_template = 'admin/proposal/assessmentreport/change_list.html'
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        max_assessments = AssessmentReport.objects.annotate(
+            num_assessments=Count('stage_assessment_2')
+        ).aggregate(max=Max('num_assessments'))['max']
+        extra_context['max_assessments'] = max_assessments or 0
+        return super().changelist_view(request, extra_context=extra_context)
+
+    def get_list_display(self, request):
+
+        basic_display = list(super().get_list_display(request))
+        max_assessments = AssessmentReport.objects.annotate(
+            num_assessments=Count('stage_assessment_2')
+        ).aggregate(max=Max('num_assessments'))['max']
+        if max_assessments:
+            for i in range(max_assessments):
+                basic_display.insert(4 + i, f'assessment_title_{i+1}')
+        return basic_display
+
+    def get_dynamic_assessment_title(self, obj, n):
+        assessments = list(obj.stage_assessment_2.all())
+        if len(assessments) >= n:
+            return assessments[n-1].score
+        return "-"
+
+    def __getattr__(self, name):
+        if name.startswith('assessment_title_'):
+            index = int(name.split('_')[-1])
+            return lambda obj: self.get_dynamic_assessment_title(obj, index)
+        raise AttributeError(f"{self.__class__.__name__} object has no attribute {name}")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        max_assessments = AssessmentReport.objects.annotate(
+            num_assessments=Count('stage_assessment_2')
+        ).aggregate(max=Max('num_assessments'))['max']
+        if max_assessments:
+            for i in range(max_assessments):
+                method_name = f'assessment_title_{i+1}'
+                method = self.__getattr__(method_name)
+                setattr(self, method_name, method)
+                assessments = AssessmentReport.objects.values_list('stage_assessment_2__key_assesment__title', 'stage_assessment_2__key_assesment__presentase')
+                title = [f'{title} ({presentase}%)' for title, presentase in assessments]
+                data = title[i] if i < len(title) else f'Assessment Title {i+1}'
+                setattr(method, 'short_description', data)
+
     search_fields = ('assessment_submission_proposal__submission_apply__team__name', 'report_details')
     readonly_fields = ('assessment_submission_proposal', 'stage_assessment_2', 'assessment_review')
 
@@ -110,9 +276,41 @@ class AssessmentReportAdmin(admin.ModelAdmin):
             'fields': ('assessment_submission_proposal', 'stage_assessment_2', 'assessment_review',)
         }),
     )
+    def display_stage_2_average_score(self, obj):
+        return obj.calculate_stage_2_average_score()
+    display_stage_2_average_score.short_description = 'Nilai Rata - Rata'
+    def get_submission_apply_title(self, obj):
+        return obj.assessment_submission_proposal.submission_apply.title
+    get_submission_apply_title.short_description = 'Judul PKM'
+
+    def get_degree_leader(self, obj):
+        return obj.assessment_submission_proposal.submission_apply.team.leader.degree
+    get_degree_leader.short_description = 'Jenjang'
+
+    def get_major_leader(self, obj):
+        return obj.assessment_submission_proposal.submission_apply.team.leader.major
+    get_major_leader.short_description = 'Prodi'
+
+    def get_final_score(self, obj):
+        return obj.assessment_review.final_score
+
+    def get_assessment_titles(self, obj):
+        # Assuming `key_assesment` is a valid field or related manager on the related objects
+        # and `title` is a field on the objects returned by `key_assesment`
+        return ", ".join([stage_assessment.key_assesment.title for stage_assessment in obj.stage_assessment_2.all()])
+
+    def get_leader_info(self, obj):
+        leader = obj.assessment_submission_proposal.submission_apply.team.leader
+        return f"{leader.full_name} - {leader.nrp}"
+    get_leader_info.short_description = 'Nama Ketua - NRP'
+
+    def get_reviewer_info(self, obj):
+        lecturer = obj.assessment_submission_proposal.reviewer
+        return f"{lecturer.full_name} / "
+    get_reviewer_info.short_description = 'Reviewer Info'
 
     def save_model(self, request, obj, form, change):
-        obj.generate_report_details()  # Assuming generate_report_details is the method to generate report details
+        obj.generate_report_details()  
         super().save_model(request, obj, form, change)
 
 class StageAssesment1Form(forms.ModelForm):
@@ -228,6 +426,7 @@ class AssesmentReviewForm(forms.ModelForm):
         fields = '__all__'  # Include all fields from the model
         widgets = {
             'final_score': forms.TextInput(attrs={'readonly': 'readonly'}),
+            'comment': forms.Textarea(attrs={'rows': 6, 'cols': 6}),
         }
 
 # Step 2: Integrate the form with the inline admin

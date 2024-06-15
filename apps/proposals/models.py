@@ -135,12 +135,17 @@ class LecturerTeamSubmissionApply(models.Model):
     class Meta:
         verbose_name = 'Pembagian Team & Reviewer'
 
+    def __init__(self, *args, **kwargs):
+        super(LecturerTeamSubmissionApply, self).__init__(*args, **kwargs)
+        # Store the original value of the lecturer field
+        self.__original_lecturer = self.lecturer_id
+
     def clean(self):
-        if self._state.adding or 'lecturer' in self.changed_fields:
+        # Check if the instance is being added or the lecturer field has changed
+        if self._state.adding or self.lecturer_id != self.__original_lecturer:
             if LecturerTeamSubmissionApply.objects.filter(lecturer=self.lecturer).exclude(pk=self.pk).exists():
                 raise ValidationError({'lecturer': 'This lecturer is already associated with a team submission and cannot be added to another.'})
-
-
+            
     def save(self, *args, **kwargs):
         self.full_clean()  
         super(LecturerTeamSubmissionApply, self).save(*args, **kwargs)

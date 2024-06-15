@@ -69,25 +69,38 @@ def submission_proposal_apply_notification(sender, instance, created, **kwargs):
 #     report.generate_report_details()
 
 @receiver(post_save, sender=AssesmentSubmissionsProposal)
-def create_assessment_report(sender, instance, created, **kwargs):
+def create_or_update_assessment_report(sender, instance, created, **kwargs):
     if created:
         AssessmentReport.objects.get_or_create(assessment_submission_proposal=instance)
+    else:
 
+        assessment_report, _ = AssessmentReport.objects.get_or_create(assessment_submission_proposal=instance)
+        assessment_report.assessment_submission_proposal = instance
+        assessment_report.save()
 
 @receiver(post_save, sender=StageAssesment2)
 def update_assessment_report_from_stage2(sender, instance, created, **kwargs):
     if created:
-        # Retrieve the AssessmentReport instance(s) related to the StageAssesment2 instance.
-        assessment_reports = AssessmentReport.objects.filter(assessment_submission_proposal=instance.assesment)
-        
-        # Check if there are any AssessmentReport instances and the status condition.
-        if assessment_reports.exists() and (instance.assesment.submission_apply.status not in ['REJECTED', 'REVISION']):
-            for assessment_report in assessment_reports:
-                # Add the StageAssesment2 instance to the ManyToManyField relation.
-                assessment_report.stage_assessment_2.add(instance)
+        # Handle the creation case
+        current_assessments = AssessmentReport.objects.filter(assessment_submission_proposal=instance.assesment)
+        for current_assessment in current_assessments:
+            if (instance.assesment.submission_apply.status != 'REJECTED' or instance.assesment.submission_apply.status != 'REVISION'):
+                # Use add() for ManyToManyField instead of update()
+                current_assessment.stage_assessment_2.add(instance)
+    else:
+        current_assessments = AssessmentReport.objects.filter(assessment_submission_proposal=instance.assesment)
+        for current_assessment in current_assessments:
+            # Use add() for ManyToManyField instead of update()
+            current_assessment.stage_assessment_2.add(instance)
+
 @receiver(post_save, sender=AssesmentReview)
 def update_assessment_report_from_review(sender, instance, created, **kwargs):
     if created:
+        # Handle the creation case
         current_assessment = AssessmentReport.objects.filter(assessment_submission_proposal=instance.assesment)
         if current_assessment.exists() and (instance.assesment.submission_apply.status != 'REJECTED' or instance.assesment.submission_apply.status != 'REVISION'):
+            current_assessment.update(assessment_review=instance)
+    else:
+        current_assessment = AssessmentReport.objects.filter(assessment_submission_proposal=instance.assesment)
+        if current_assessment.exists():
             current_assessment.update(assessment_review=instance)
