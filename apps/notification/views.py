@@ -25,8 +25,10 @@ class NotificationViewSet(viewsets.GenericViewSet, mixins.UpdateModelMixin, mixi
             return NotificationListSerializer
         else:
             return NotificationDetailSerializer
+        
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        instance.read = True
-        instance.save()
+        if not request.user.is_superuser:
+            instance.read = True
+            instance.save(update_fields=['read'])
         return super().retrieve(request, *args, **kwargs)

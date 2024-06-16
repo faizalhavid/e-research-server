@@ -1,3 +1,4 @@
+import os
 import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
@@ -70,7 +71,7 @@ class User(AbstractUser):
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True, related_name='user_profile')
     full_name = models.CharField(max_length=100, blank=True, default='')
-    image = models.ImageField(upload_to=UploadToPathAndRename('accounts/profile_pictures/'),null=True, blank=True)
+    image = models.ImageField(upload_to=UploadToPathAndRename(os.path.join('profile', 'images')), blank=True, null=True)
     address = models.CharField(max_length=100, blank=True, default='')
     phone_number = models.CharField(max_length=20, blank=True, default='')
     birth_date = models.DateField(null=True, blank=True)
@@ -80,9 +81,14 @@ class UserProfile(models.Model):
         return self.full_name
     
     def save(self, *args, **kwargs):
-        handle_image_replacement(self)
+        # handle_image_replacement(self)
+        # crop_image_to_square(self)
+
+        if not self.full_name :
+            self.full_name = self.user.first_name + ' ' + self.user.last_name
+
+
         super().save(*args, **kwargs)
-        crop_image_to_square(self)
     
 class Departement(models.Model):
     name = models.CharField(max_length=50, blank=True, default='')
@@ -155,11 +161,6 @@ class Guest(UserProfile):
     def __str__(self):
         return self.full_name
     
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if not self.full_name :
-            self.full_name = self.user.first_name + ' ' + self.user.last_name
-
 
 
 

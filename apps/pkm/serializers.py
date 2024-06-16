@@ -46,8 +46,6 @@ class PKMIdeaContributeSerializer(TaggitSerializer,serializers.ModelSerializer):
         user = self.context['request'].user
         slug = attrs.get('slug')
         max_contributions = 5
-
-
         # Count the number of existing contributions by this user
         contributions_count = PKMIdeaContribute.objects.filter(user=user).count()
 

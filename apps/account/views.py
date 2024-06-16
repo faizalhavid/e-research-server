@@ -198,7 +198,7 @@ class ForgetPasswordMail(generics.CreateAPIView):
 
 class ChangePassword(generics.UpdateAPIView):
     queryset = User.objects.all()
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = ChangePasswordSerializer
 
 class ResetPassword(generics.UpdateAPIView):

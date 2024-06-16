@@ -33,7 +33,7 @@ class ArticleSerializer(TaggitSerializer,serializers.ModelSerializer):
             'excerpt': {'read_only': True},
             'view': {'read_only': True},
             'tags': {'read_only': True},
-            'title': {'write_only': True},
+            'title': {'read_only': True},
             'status': {'read_only': True},
             'created': {'read_only': True},
             'image': {'read_only': True},

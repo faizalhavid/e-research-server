@@ -206,7 +206,6 @@ SESSION_COOKIE_AGES = 60 * 60 * 24 * 7 # 7 days
 
 
 
-
 JAZZMIN_SETTINGS = {
     "site_title": "E Research",
     "site_header": "E Research",
@@ -337,6 +336,14 @@ JAZZMIN_SETTINGS = {
     },
 }
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_DIR = BASE_DIR / 'static'
+if not os.path.exists(STATIC_DIR):
+    os.makedirs(STATIC_DIR)
+
+STATICFILES_DIRS = [
+    STATIC_DIR,
+]
 
 # AWS
 AWS_QUERYSTRING_AUTH = False
@@ -366,9 +373,8 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # MEDIA_ROOT = BASE_DIR / 'media'
 # MEDIA_URL = '/media/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+
+
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",

@@ -292,7 +292,7 @@ class ResendEmailSerializer(serializers.ModelSerializer):
         return value
 
 
-class ChangePasswordSerializer(serializers.ModelSerializer):
+class       ChangePasswordSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)

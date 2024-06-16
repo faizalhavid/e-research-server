@@ -51,7 +51,7 @@ class PKMIdeaContribute(models.Model):
     problem = ArrayField(models.CharField(max_length=200), blank=True, default=list)
     solution = ArrayField(models.CharField(max_length=200), blank=True, default=list)
     tags = TaggableManager()
-    slug = models.SlugField(unique=True, blank=True, null=True, max_length=255)
+    slug = models.SlugField( blank=True, null=True, max_length=255)
     image = models.ImageField(upload_to='pkm/idea_contribute/', blank=True, null=True)
     document = models.FileField(upload_to='pkm/idea_contribute/', blank=True, null=True)
     STATUS_CHOICES = (
@@ -67,23 +67,16 @@ class PKMIdeaContribute(models.Model):
         verbose_name = 'Bank Judul'
         verbose_name_plural = 'Bank Judul'
         ordering = ['-created']
+        
     def __str__(self):
         return self.title
-    
-    def clean(self):
-        if not self.slug:
-            self.slug = slugify(self.title)
-        if PKMIdeaContribute.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
-            raise failure_response_validation('Title already exists',status_code=400)
 
     def save(self, *args, **kwargs):
-        self.clean()
-        super(PKMIdeaContribute, self).save(*args, **kwargs)
         if not self.slug:
-            self.slug = slugify(self.title)
+            self.slug = hashlib.sha256().hexdigest()
         if self.status == 'P' and not self.applied_date:
             self.applied_date = timezone.now()
-        super(PKMIdeaContribute, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 
 
