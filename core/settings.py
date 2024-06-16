@@ -156,9 +156,9 @@ CORS_ALLOW_HEADERS = [
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',  
-    'https://e-research-be3e0f7d5e0d.nevacloud.io'
+    'https://e-research-be3e0f7d5e0d.nevacloud.io',
+    'http://127.0.0.1:3000',  # Add this line
 ]
-
 
 
 # REST FRAMEWORK

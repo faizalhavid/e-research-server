@@ -29,8 +29,8 @@ class LoginToken(generics.CreateAPIView):
         refresh = RefreshToken.for_user(user)
         user_data = LoginSerializer(user, context=self.get_serializer_context()).data
         response = success_response('User logged in successfully',{'user': user_data, 'access': str(refresh.access_token), 'refresh': str(refresh)})
-        response.set_cookie('refresh', str(refresh), httponly=True, samesite='Strict')
-        response.set_cookie('access', str(refresh.access_token), httponly=True, samesite='Strict')
+        # response.set_cookie('refresh', str(refresh), httponly=True, samesite='Strict')
+        # response.set_cookie('access', str(refresh.access_token), httponly=True, samesite='Strict')
         return response
 
 class Register(generics.CreateAPIView):

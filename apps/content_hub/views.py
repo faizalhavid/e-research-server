@@ -1,13 +1,15 @@
 
 from rest_framework.response import Response
 from rest_framework import viewsets, permissions, filters, mixins
+from apps.content_hub.filters import ArticleFilter
 from apps.content_hub.models import Article, Comment, Notice
 from apps.content_hub.serializers import ArticleSerializer, CommentSerializer, NoticeSerializer
 from utils.drf_http_permission import ReadOnlyModelViewSet
 from utils.permissions import IsStudent
 from django.db.models import Case, When, Value, IntegerField
-
-
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
+from rest_framework import status
 
 class NoticeViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
     queryset = Notice.objects.annotate(
@@ -30,8 +32,9 @@ class ArticleViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = (permissions.AllowAny, )
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['title', 'content']
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
+    search_fields = ['title', 'content', 'tags__name']
+    filterset_class = ArticleFilter
     lookup_field = 'slug'
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -43,8 +46,12 @@ class ArticleViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.
     def get_queryset(self):
         return Article.objects.filter(status='P').order_by('-created', '-view', '-likes')
     
-    def update(self, request, *args, **kwargs):
-        return Response({'message': 'Method Not Allowed'}, status=405)
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def add_like(self, request, *args, **kwargs):
+        article = self.get_object()
+        article.likes += 1  # Increment the likes count
+        article.save(update_fields=['likes'])  # Save the updated likes count to the database
+        return Response({'likes': article.likes}, status=status.HTTP_200_OK)
     
         
 

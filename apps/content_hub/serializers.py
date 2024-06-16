@@ -39,6 +39,7 @@ class ArticleSerializer(TaggitSerializer,serializers.ModelSerializer):
             'image': {'read_only': True},
             'author': {'read_only': True},
             'content': {'read_only': True},
+            'tags': {'read_only': True},
         }
 
     def get_author(self, obj):
