@@ -148,7 +148,7 @@ class ResendEmailActivation(generics.UpdateAPIView):
 
         # Sending mail to target
         send_mail(
-            "Techconsulta Account Activation",
+            "E Research Account Activation",
             html_content,
             settings.EMAIL_HOST_USER,
             [email],
