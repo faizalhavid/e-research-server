@@ -40,20 +40,30 @@ class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created', 'applied_date']
     lookup_field = 'slug'
 
-    def get_queryset(self):
-        return PKMIdeaContribute.objects.filter(status='P')
+    def get_queryset(self):          
+        if self.request.user.is_superuser:
+                return PKMIdeaContribute.objects.all()
+        if self.action == 'list':
+            return PKMIdeaContribute.objects.filter(status='P')
+        elif self.action == 'retrieve':
+            return PKMIdeaContribute.objects.all()
+        else:
+            return PKMIdeaContribute.objects.none()
+
+    
+        
 
     @action(detail=False, methods=['get'])
     def by_user(self, request, *args, **kwargs):
-        user_contributions = PKMIdeaContribute.objects.filter(user=request.user, status='P')
+        all_contributions = PKMIdeaContribute.objects.all()  # Retrieve all objects
         paginator = PageNumberPagination()
-        page = paginator.paginate_queryset(user_contributions, request)
+        page = paginator.paginate_queryset(all_contributions, request)
         
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return paginator.get_paginated_response(serializer.data)
         else:
-            serializer = self.get_serializer(user_contributions, many=True)
+            serializer = self.get_serializer(all_contributions, many=True)
             return Response(serializer.data)
 
 

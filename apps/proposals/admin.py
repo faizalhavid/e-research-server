@@ -211,7 +211,7 @@ class AssessmentReportResource(resources.ModelResource):
 @admin.register(AssessmentReport)
 class AssessmentReportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     resource_class = AssessmentReportResource
-    list_display = (
+    list_display = (        
         'get_submission_apply_title', 
         'get_leader_info', 
         'get_degree_leader', 
@@ -224,7 +224,7 @@ class AssessmentReportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     change_list_template = 'admin/proposal/assessmentreport/change_list.html'
 
     def changelist_view(self, request, extra_context=None):
-        extra_context = extra_context or {}
+        extra_context = extra_context or {} 
         max_assessments = AssessmentReport.objects.annotate(
             num_assessments=Count('stage_assessment_2')
         ).aggregate(max=Max('num_assessments'))['max']
