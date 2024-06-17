@@ -302,13 +302,15 @@ class SubmissionProposalFactory(factory.django.DjangoModelFactory):
     addional_file = None  # You may need to adjust this if you want to generate fake files
     status = factory.LazyAttribute(lambda _: fake.random_element(['ARCHIVED', 'PUBLISHED']))
 
+
+
 class SubmissionsProposalApplyFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SubmissionsProposalApply
 
     submission = factory.SubFactory(SubmissionProposalFactory)
-    category = None  # You may need to adjust this if you have a PKMSchemeFactory
+    # Assuming category is a ForeignKey to a PKMScheme model
+    category = factory.SubFactory(PKMSchemeFactory)  # Adjust if PKMSchemeFactory is not the correct factory
     team = factory.SubFactory(TeamFactory)
     status = factory.LazyAttribute(lambda _: fake.random_element(['APPLIED', 'ACCEPTED', 'REJECTED']))
-    team = factory.SubFactory(TeamFactory)
     lecturer = factory.SubFactory(LecturerFactory)

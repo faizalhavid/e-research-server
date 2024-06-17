@@ -150,12 +150,12 @@ class EReasearchAdminSite(admin.AdminSite, AdminChartMixin):
                 "data": [SubmissionsProposalApply.objects.filter(category__abbreviation__exact=category, submission__program__period = periode_now).count() for category in insentif_pkm],
                 "borderWidth": 0,
                 "backgroundColor": [
-                    'rgb(255, 99, 132)',
-                    'rgb(255, 159, 64)',
+                     'rgb(113, 88, 143)',  # Purple
+                     'rgb(234, 76, 137)',
                 ],
                 "borderColor": [
-                    'rgb(255, 99, 132)',
-                    'rgb(255, 159, 64)',
+                     'rgb(113, 88, 143)',  # Purple
+                    'rgb(234, 76, 137)', 
                 ],
             }
         ]

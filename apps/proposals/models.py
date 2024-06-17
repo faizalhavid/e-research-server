@@ -60,7 +60,7 @@ class SubmissionsProposalApply(models.Model):
     submitted_at = models.DateTimeField(auto_now_add=True)
     team = models.ForeignKey('team.Team', related_name='submissions_proposals_apply', on_delete=models.CASCADE)
     # lecturer = models.ForeignKey('account.Lecturer', related_name='submissions_proposals_apply', on_delete=models.CASCADE, blank=True, null=True)
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=200,unique=True)
     description = models.TextField(blank=True, null=True)
     tags = TaggableManager( related_name='submissions_proposals_apply')
     proposal = models.FileField(upload_to=UploadToPathAndRename(os.path.join('proposals', 'submission_proposal/apply')))
@@ -77,7 +77,7 @@ class SubmissionsProposalApply(models.Model):
             self.category = self.submission.program.scheme.first()  
 
         if not self.slug:
-            self.slug = hashlib.sha256(self.title.encode()).hexdigest()[:15]
+            self.slug = hashlib.sha256().hexdigest()
 
         if self.submission.title == 'REVISION':
             # If the application status is also "REVISION", bypass the period check
