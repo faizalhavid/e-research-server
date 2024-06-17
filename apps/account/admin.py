@@ -2,7 +2,7 @@ from django.contrib import admin
 from apps.account.models import *
 from django.contrib.auth import get_user_model
 from django.contrib.admin.models import LogEntry
-from import_export import resources
+from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
 from django.utils import timezone
 from django.contrib.admin import SimpleListFilter
@@ -165,6 +165,7 @@ class LecturerReviewerStatusFilter(SimpleListFilter):
 
 
 class LecturerModelResource(resources.ModelResource):
+    user_email = fields.Field(attribute='user', column_name='user.email')
     class Meta:
         model = Lecturer
         fields = ('nidn', 'full_name', 'department')  # Add or remove fields as needed
@@ -175,6 +176,9 @@ class LecturerModelResource(resources.ModelResource):
             'FULL_NAME': 'full_name',
             'DEPARTMENT': 'department'
         }
+
+    def dehydrate_user_email(self, lecturer):
+        return lecturer.user.email if lecturer.user else ''
 
     def dehydrate_department(self, lecturer):
         if lecturer.department is not None:
@@ -329,17 +333,20 @@ class UserAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     online_status.boolean = True
     online_status.short_description = 'Online'
 
+
     def get_fieldsets(self, request, obj=None):
-        # Check if the user is a superuser or in the "Admin" group
-        if request.user.is_superuser or Group.objects.get(name="Admin").user_set.filter(id=request.user.id).exists():
-            return super().get_fieldsets(request, obj)
-        
-        # For users not in the "Admin" group, exclude certain sections
-        return (
-            ('Account', {'fields': ('email', 'password', 'user_role')}),
+        # Base fieldsets without the 'password' field
+        fieldsets = [
+            ('Account', {'fields': ('email', 'user_role')}),
             ('Personal info', {'fields': ('first_name', 'last_name')}),
-            # Exclude 'Permissions', 'Important dates', 'User actions' for non-Admin group users
-        )
+        ]
+        
+        # Check if the user is a superuser, in the "Admin" group, or is editing their own account
+        if request.user.is_superuser or request.user.groups.filter(name="Admin").exists() or (obj and obj == request.user):
+            # Include the 'password' field for these users
+            fieldsets[0][1]['fields'] = ('email', 'password', 'user_role')
+        
+        return fieldsets
 
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = super().get_readonly_fields(request, obj)
@@ -370,44 +377,30 @@ class UserAdmin(ImportExportModelAdmin, admin.ModelAdmin):
             return super().get_model_perms(request)
         return {}
     
+    def has_add_permission(self, request):
+        # Allow adding if the user is a superuser or in the "Admin" group
+        return request.user.is_superuser or request.user.groups.filter(name='Admin').exists()
+
     def has_change_permission(self, request, obj=None):
         # Allow changing if no specific object is targeted (e.g., accessing the list view)
         if obj is None:
-            return super().has_change_permission(request, obj)
-        # Deny permission if the target user is a superuser and the requesting user is not a superuser
-        if obj.is_superuser and not request.user.is_superuser:
-            return False
-        # Allow superusers to change any user
-        if request.user.is_superuser:
             return True
-        # Allow staff users to change non-superuser accounts
-        if request.user.is_staff and not obj.is_superuser:
-            return True
-        # Allow users to change their own details
-        if obj == request.user:
-            return True
-        # Otherwise, no permission
-        return False
+        # Allow if the user is a superuser, in the "Admin" group, or editing their own profile
+        return request.user.is_superuser or request.user.groups.filter(name='Admin').exists() or obj == request.user
 
     def has_delete_permission(self, request, obj=None):
         # Allow deleting if no specific object is targeted (e.g., accessing the list view)
         if obj is None:
-            return super().has_delete_permission(request, obj)
-        # Deny permission if the target user is a superuser and the requesting user is not a superuser
-        if obj.is_superuser and not request.user.is_superuser:
-            return False
-        # Allow superusers to delete any user
-        if request.user.is_superuser:
             return True
-        # Allow staff users to delete non-superuser accounts
-        if request.user.is_staff and not obj.is_superuser:
-            return True
-        # Allow users to delete their own account
-        if obj == request.user:
-            return True
-        # Otherwise, no permission
-        return False
-        
+        # Allow if the user is a superuser, in the "Admin" group, or deleting their own account
+        return request.user.is_superuser or request.user.groups.filter(name='Admin').exists() or obj == request.user
+
+    def get_readonly_fields(self, request, obj=None):
+        # Make all fields read-only for users who are not superusers, not in the "Admin" group, and not editing their own profile
+        if not request.user.is_superuser and not request.user.groups.filter(name='Admin').exists() and (obj is None or obj != request.user):
+            return self.fields or [f.name for f in self.model._meta.fields]
+        return super().get_readonly_fields(request, obj)
+    
 @admin.register(Departement)
 class DepartmentAdmin(admin.ModelAdmin):
     list_display = ( 'name','abbreviation', 'display_majors')

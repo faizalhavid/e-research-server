@@ -58,14 +58,13 @@ class User(AbstractUser):
         if not self.username:
             self.username = self.email.split('@')[0]
         super().save(*args, **kwargs) 
-        if self.is_superuser:  # Don't change is_staff for superusers
-            if self.groups.exists():
-                if Group.objects.filter(name='Admin').exists() and Group.objects.get(name='Admin') in self.groups.all() or Group.objects.filter(name='LecturerReview').exists() and Group.objects.get(name='LecturerReview') in self.groups.all():
-                    self.is_staff = True
-                else:
-                    self.is_staff = False
+        if self.groups.exists():
+            if Group.objects.filter(name='Admin').exists() and Group.objects.get(name='Admin') in self.groups.all() or Group.objects.filter(name='LecturerReview').exists() and Group.objects.get(name='LecturerReview') in self.groups.all():
+                self.is_staff = True
             else:
                 self.is_staff = False
+        else:
+            self.is_staff = False
         super().save(*args, **kwargs)    
     
 class UserProfile(models.Model):
@@ -167,9 +166,13 @@ class Guest(UserProfile):
 @receiver(m2m_changed, sender=User.groups.through)
 def update_staff_status(sender, instance, action, **kwargs):
     if action in ['post_add', 'post_remove']:
-        instance.is_staff = Group.objects.get(name='Admin') in instance.groups.all()
+        # Check if the user is in 'Admin' or 'LecturerReview' groups
+        is_admin = instance.groups.filter(name='Admin').exists()
+        is_lecturer_review = instance.groups.filter(name='LecturerReview').exists()
+        
+        # Update is_staff based on group membership
+        instance.is_staff = is_admin or is_lecturer_review
         instance.save()
-    
 @receiver(pre_delete, sender=User)
 def delete_outstanding_tokens(sender, instance, **kwargs):
     try : 

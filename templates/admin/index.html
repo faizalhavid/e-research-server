@@ -80,7 +80,7 @@
         <div class="col-lg-6 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header">
-                    <h2 class="mb-0">Latest Notices</h2>
+                    <h2 class="mb-0">Pengumuman Terbaru</h2>
                 </div>
                 <div class="list-group list-group-flush">
                     {% if notices %}
@@ -90,7 +90,12 @@
                                     <h5 class="mb-0">{{ notice.title }}</h5>
                                     <small class="text-muted">{{ notice.created|date:"N j, Y" }}</small>
                                 </div>
-                                <p class="mb-2">{{ notice.content|truncatewords:20 }}</p>
+                                <!-- In your Django template -->
+                
+                                
+                                <div class="article-content">
+                                    {{ article.content|strip_tags|truncatechars:100 }}
+                                </div>
                                 <small class="text-muted">Priority: {{ notice.get_priority_display }}</small>
                             </a>
                         {% endfor %}

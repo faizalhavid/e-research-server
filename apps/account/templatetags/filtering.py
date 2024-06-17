@@ -1,5 +1,6 @@
 from django import template
 register = template.Library()
+import re
 
 @register.filter
 def get_item(list, index):
@@ -18,3 +19,7 @@ def get_tuple_item(value, arg):
 @register.filter
 def to_range(value):
     return range(value)
+
+@register.filter
+def strip_tags(value):
+    return re.sub(r'<[^>]*?>', '', value)

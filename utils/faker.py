@@ -178,6 +178,11 @@ class LecturerFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     full_name = factory.LazyAttribute(lambda _: fake.name())
     nidn = factory.LazyAttribute(lambda _: fake.random_number(digits=18))
+    address = factory.LazyAttribute(lambda _: fake.address())
+    phone_number = factory.LazyAttribute(lambda _: fake.phone_number())
+    birth_date = factory.LazyAttribute(lambda _: fake.date_of_birth())
+
+
     
     # Select a random department from departement_major_data
     department = factory.LazyAttribute(
