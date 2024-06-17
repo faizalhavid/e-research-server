@@ -152,7 +152,7 @@ class StudentFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Student
 
-    user = factory.SubFactory(UserFactory)
+    # user = factory.SubFactory(UserFactory)
     full_name = factory.LazyAttribute(lambda _: fake.name())
     nrp = factory.LazyAttribute(lambda _: fake.random_number(digits=12))
     

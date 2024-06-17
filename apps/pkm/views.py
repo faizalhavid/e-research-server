@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from requests import Response
 from rest_framework import permissions, viewsets,filters,views,mixins
 
+from apps.account.models import Student
 from apps.pkm.filter import PKMActivityScheduleFilter, PKMIdeaContributeFilter
 from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMIdeaContributeApplyTeam, PKMScheme
 from apps.pkm.serializers import PKMActivityScheduleSerializer, PKMIdeaContributeApplyTeamSerializer, PKMIdeaContributeSerializer, PKMSchemeSerializer
@@ -49,22 +50,27 @@ class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
             return PKMIdeaContribute.objects.all()
         else:
             return PKMIdeaContribute.objects.none()
-
-    
         
 
     @action(detail=False, methods=['get'])
     def by_user(self, request, *args, **kwargs):
-        all_contributions = PKMIdeaContribute.objects.all()  # Retrieve all objects
-        paginator = PageNumberPagination()
-        page = paginator.paginate_queryset(all_contributions, request)
-        
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return paginator.get_paginated_response(serializer.data)
+        user = request.user
+        if not user:
+            return PKMIdeaContribute.objects.none()
+    
+        if user.is_superuser:
+            idea_contributes = PKMIdeaContribute.objects.all()
         else:
-            serializer = self.get_serializer(all_contributions, many=True)
-            return Response(serializer.data)
+            idea_contributes = PKMIdeaContribute.objects.filter(user=user)
+
+        # Apply pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = 10  
+        result_page = paginator.paginate_queryset(idea_contributes, request)
+        serializer = PKMIdeaContributeSerializer(result_page, many=True)
+
+
+        return paginator.get_paginated_response(serializer.data)
 
 
 class IdeaContributeReportView(views.APIView):
@@ -111,7 +117,8 @@ class PKMIdeaContributeApplyTeamViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.is_superuser:
             return PKMIdeaContributeApplyTeam.objects.all()
-        return PKMIdeaContributeApplyTeam.objects.filter(Q(team__leader=user) | Q(team__members=user))
+        student = get_object_or_404(Student, user=user)
+        return PKMIdeaContributeApplyTeam.objects.filter(Q(team__leader=student))
         # if PKMIdeaContributeApplyTeam.objects.filter(idea_contribute__user=user).exists():
         #     return PKMIdeaContributeApplyTeam.objects.filter(idea_contribute__user=user)
 

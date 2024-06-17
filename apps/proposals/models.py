@@ -77,7 +77,7 @@ class SubmissionsProposalApply(models.Model):
             self.category = self.submission.program.scheme.first()  
 
         if not self.slug:
-            self.slug = hashlib.sha256().hexdigest()
+            self.slug = hashlib.sha256(self.submission.title.encode('utf-8')).hexdigest()[:50]
 
         if self.submission.title == 'REVISION':
             # If the application status is also "REVISION", bypass the period check

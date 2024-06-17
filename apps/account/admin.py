@@ -38,6 +38,7 @@ class LecturerInline(admin.StackedInline):
     #         return True
     #     return False
 class StudentModelResource(resources.ModelResource):
+    user_email = fields.Field(attribute='user', column_name='user.email')
     class Meta:
         model = Student
         fields = ('nrp', 'full_name', 'admission_year', 'degree', 'major', 'department')
@@ -56,6 +57,9 @@ class StudentModelResource(resources.ModelResource):
             return student.major.name  # Assuming 'name' is a field in the Major model
         else:
             return ''
+    
+    def dehydrate_user_email(self,student):
+        return student.user.email if student.user else ''
 
     def dehydrate_department(self, student):
         if student.department is not None:
@@ -259,6 +263,7 @@ class LecturerAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 User = get_user_model()
 
 class UserModelResource(resources.ModelResource):
+
     class Meta:
         model = User
         fields = ('email', 'groups')
@@ -282,6 +287,8 @@ class UserModelResource(resources.ModelResource):
             else:
                 new_headers.append(header)
         return new_headers
+    
+
 
     def before_import_row(self, row, row_number=None, **kwargs):
         row['email'] = row.pop('Email')
