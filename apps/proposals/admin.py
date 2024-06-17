@@ -293,7 +293,9 @@ class AssessmentReportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     get_major_leader.short_description = 'Prodi'
 
     def get_final_score(self, obj):
-        return obj.assessment_review.final_score
+        if obj and hasattr(obj, 'assessment_review') and obj.assessment_review and hasattr(obj.assessment_review, 'final_score'):
+            return obj.assessment_review.final_score
+        return None  # Or return 0 as a default value, depending on your requirements
 
     def get_assessment_titles(self, obj):
         # Assuming `key_assesment` is a valid field or related manager on the related objects
