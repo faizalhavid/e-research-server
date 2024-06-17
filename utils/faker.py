@@ -7,6 +7,7 @@ from django.contrib.auth.models import Group
 from django.utils import timezone
 
 from apps.account.models import Departement, Lecturer, Major, Student, User
+from apps.content_hub.models import Article
 from apps.pkm.admin import PKMActivity
 from apps.pkm.models import PKMIdeaContribute, PKMProgram, PKMScheme
 from apps.proposals.models import KeyStageAssesment1, SubmissionProposal, SubmissionsProposalApply
@@ -314,3 +315,15 @@ class SubmissionsProposalApplyFactory(factory.django.DjangoModelFactory):
     team = factory.SubFactory(TeamFactory)
     status = factory.LazyAttribute(lambda _: fake.random_element(['APPLIED', 'ACCEPTED', 'REJECTED']))
     lecturer = factory.SubFactory(LecturerFactory)
+
+
+
+
+class ArticleFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Article
+
+    title = factory.LazyAttribute(lambda _: fake.sentence())
+    content = factory.LazyAttribute(lambda _: fake.text(max_nb_chars=2000))
+    author = factory.SubFactory(UserFactory)
+    status = factory.LazyAttribute(lambda _: fake.random_element(['D', 'P', 'A']))

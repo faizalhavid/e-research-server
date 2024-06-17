@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib import admin
 from django.forms import BaseInlineFormSet, ModelForm, model_to_dict
+from django.http import HttpResponseRedirect
 from apps.account.models import Lecturer
 from django.utils.html import format_html
 from apps.proposals.models import *
@@ -326,7 +327,7 @@ class StageAssesment1Form(forms.ModelForm):
         self.fields['key_assesment'].widget.attrs['class'] = 'custom-select'
         self.fields['key_assesment'].widget.attrs.update({
             'class': 'custom-select',
-            'style': 'width:800px;word-wrap: break-word;height:900px!important;padding: 10px 10px!important;'
+            'style': 'width:700px;word-wrap: break-word;height:900px!important;padding: 10px 10px!important;'
         })
         if self.instance and self.instance.pk:
             self.fields['key_assesment'].disabled = True
@@ -370,7 +371,7 @@ class StageAssesment2Form(forms.ModelForm):
         self.fields['key_assesment'].widget.attrs['class'] = 'custom-select'
         self.fields['key_assesment'].widget.attrs.update({
             'class': 'custom-select',
-            'style': 'width: 800px;' 
+            'style': 'width: 700px;' 
         })
         initial = kwargs.get('initial')
   
@@ -426,7 +427,7 @@ class AssesmentReviewForm(forms.ModelForm):
         fields = '__all__'  # Include all fields from the model
         widgets = {
             'final_score': forms.TextInput(attrs={'readonly': 'readonly'}),
-            'comment': forms.Textarea(attrs={'rows': 6, 'cols': 6}),
+            'comment': forms.Textarea(attrs={'rows': 6, 'cols': 40}), 
         }
 
 # Step 2: Integrate the form with the inline admin
@@ -479,6 +480,17 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
     )
     list_display_links = ['submission_information']  
 
+    def get_changelist_instance(self, request):
+        """
+        Override to dynamically set list_editable based on user permissions.
+        """
+        changelist = super().get_changelist_instance(request)
+        if request.user.is_superuser or request.user.groups.filter(name='Admin').exists():
+            self.list_editable = ('reviewer',)
+        else:
+            self.list_editable = ()
+        return changelist
+
     def render_change_form(self, request, context, *args, **kwargs):
         rendered_form = super().render_change_form(request, context, *args, **kwargs)
         
@@ -491,6 +503,7 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
         })
         
         return rendered_form
+    
 
     def proposal_file_url(self, obj):
         proposal = obj.submission_apply.proposal
@@ -520,6 +533,21 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
         color = 'red' if obj.submission_apply.status == 'Rejected' else 'green'
         return format_html('<span style="color: {};">{}</span>', color, obj.submission_apply.status)
     status_colored.short_description = 'Status'
+    
+
+
+    def has_delete_permission(self, request, obj=None):
+        if request.user.is_superuser or request.user.groups.filter(name='Admin').exists():
+            return True
+        return False
+
+    def has_add_permission(self, request):
+        if request.user.is_superuser or request.user.groups.filter(name='Admin').exists():
+            return True
+        return False
+
+
+
 
 
 

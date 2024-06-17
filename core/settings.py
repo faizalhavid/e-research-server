@@ -336,14 +336,7 @@ JAZZMIN_SETTINGS = {
     },
 }
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATIC_DIR = BASE_DIR / 'static'
-if not os.path.exists(STATIC_DIR):
-    os.makedirs(STATIC_DIR)
 
-STATICFILES_DIRS = [
-    STATIC_DIR,
-]
 
 # AWS
 AWS_QUERYSTRING_AUTH = False
