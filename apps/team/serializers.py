@@ -18,7 +18,7 @@ class MemberSerializers(serializers.ModelSerializer):
 
 class TeamSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(max_length=None, use_url=True, allow_null=True, required=False)
-    members = serializers.ListField(child=serializers.IntegerField(), write_only=True)
+    members = serializers.ListField(child=serializers.IntegerField())
     lecturer = serializers.PrimaryKeyRelatedField(queryset=Lecturer.objects.all())
     user_role = serializers.SerializerMethodField()
     class Meta:
@@ -48,39 +48,43 @@ class TeamSerializer(serializers.ModelSerializer):
     def validate(self, data):
         user = self.context['request'].user
         leader = Student.objects.get(user=user) if not user.is_superuser else None
-        members = data.get('members')
-        lecturer = data.get('lecturer')
+        members = data.get('members', [])  # Default to an empty list if not provided
+        lecturer = data.get('lecturer', None)  
 
-        if Team.objects.filter(leader=leader, status='ACTIVE').exists():
-            raise failure_response_validation({'leader': 'You only can be a leader in one active team'})
-    
-        if Team.objects.filter(lecturer=lecturer, status='ACTIVE').count() >= 10:
+        if self.instance:
+            # This is an update operation, exclude the current team from the check
+            if Team.objects.filter(leader=leader, status='ACTIVE').exclude(pk=self.instance.pk).exists():
+                raise failure_response_validation({'leader': 'You only can be a leader in one active team'})
+        else:
+            # This is a creation operation, just check if any active team exists led by the leader
+            if Team.objects.filter(leader=leader, status='ACTIVE').exists():
+                raise failure_response_validation({'leader': 'You only can be a leader in one active team'})
+
+        if lecturer and Team.objects.filter(lecturer=lecturer, status='ACTIVE').count() >= 10:
             raise failure_response_validation('The lecturer has reached the maximum number of teams')
 
-        # Assuming User is your user model and members is a list of user IDs
-        users = User.objects.filter(id__in=members)  # Fetch user objects based on member IDs
-        if any(member.user == user for member in users):  # Now member is a user object
-            raise failure_response_validation({'members': 'Leader cannot also be a member'})
+        if len(members) > 0 and len(members) < 1:
+            raise failure_response_validation('Team must have at least 1 member')
+
         for member_id in members:
             member = Student.objects.get(id=member_id)
             if Team.objects.filter(members=member).count() > 3:
                 error_message = f"Member {member.full_name} has reached the maximum team limit."
                 raise failure_response_validation({"members": error_message})
-        
-        
-    
+
         unregistered_member = next((member for member in members if hasattr(member, 'user') and member.user is None), None)
         if unregistered_member:
             raise failure_response_validation({"members": f"{unregistered_member.full_name} is not registered in the system"})
+        
         return data
-    
+
     def to_representation(self, instance):
         response = super().to_representation(instance)
         response['lecturer'] = LecturerSerializer(instance.lecturer).data
         response['leader'] = MemberSerializers(instance.leader).data
         response['members'] = MemberSerializers(instance.members.all(), many=True).data
         return response
-    
+        
 
 
 class TeamVacanciesSerializer(TaggitSerializer,serializers.ModelSerializer):
