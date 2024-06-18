@@ -47,7 +47,8 @@ class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return PKMIdeaContribute.objects.filter(status='P')
         elif self.action == 'retrieve':
-            return PKMIdeaContribute.objects.all()
+            slug = self.kwargs.get('slug')  
+            return PKMIdeaContribute.objects.filter(slug=slug)
         else:
             return PKMIdeaContribute.objects.none()
         
