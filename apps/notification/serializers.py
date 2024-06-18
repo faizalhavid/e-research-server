@@ -26,7 +26,7 @@ class NotificationDetailSerializer(serializers.ModelSerializer):
             'pkmideacontribute': PKMIdeaContributeSerializer,
             'pkmactivityschedule': PKMActivityScheduleSerializer,
             'pkmprogram': PKMProgramSerializer,
-            'pkmideacontributeapply': PKMIdeaContributeApplyTeamSerializer,
+            'pkmideacontributeapplyteam': PKMIdeaContributeApplyTeamSerializer,
             'team': TeamSerializer,
             'teamapply': TeamApplySerializer,
             'teamtask': TeamTaskSerializer,

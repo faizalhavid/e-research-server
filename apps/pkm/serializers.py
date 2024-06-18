@@ -9,7 +9,7 @@ from taggit.serializers import (TagListSerializerField,
 from apps.team.models import Team
 from apps.team.serializers import TeamSerializer
 from utils.exceptions import failure_response, failure_response_validation
-
+from django.db.models import Q
 
 class PKMSchemeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -66,14 +66,18 @@ class PKMIdeaContributeSerializer(TaggitSerializer,serializers.ModelSerializer):
         except PKMIdeaContributeApplyTeam.DoesNotExist:
             return None
         
+
+
     def get_team_apply_status(self, obj):
         if not self.context['request'].user.groups.filter(name='Student').exists():
             return None
         student = Student.objects.get(user=self.context['request'].user)
-        team = Team.objects.filter(leader=student, status='ACTIVE').first()
-        idea_team_apply = obj.apply_teams.filter(status__in=['A', 'P', 'R'], team=team).first()
-        return idea_team_apply.status if idea_team_apply else None
-        
+        # Use .first() to get a single instance of Team
+        team = Team.objects.filter(Q(leader=student) | Q(members=student)).first()
+        if team:
+            idea_team_apply = obj.apply_teams.filter(status__in=['A', 'P', 'R'], team=team).first()
+            return idea_team_apply.status if idea_team_apply else None
+        return None
     def to_representation(self, instance):
         # Get default serialized data
         representation = super().to_representation(instance)
@@ -95,7 +99,7 @@ class PKMIdeaContributeSerializer(TaggitSerializer,serializers.ModelSerializer):
 
 
 class PKMIdeaContributeApplyTeamSerializer(serializers.ModelSerializer):    
-
+    
     class Meta:
         model = PKMIdeaContributeApplyTeam
         fields = '__all__'
@@ -138,5 +142,7 @@ class PKMIdeaContributeApplyTeamSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         idea_contribute = PKMIdeaContributeSerializer(instance.idea_contribute, context=self.context).data
+        team = TeamSerializer(instance.team, context=self.context).data
         representation['idea_contribute'] = idea_contribute
+        representation['team'] = team
         return representation

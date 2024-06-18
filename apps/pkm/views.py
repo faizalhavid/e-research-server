@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from requests import Response
 from rest_framework import permissions, viewsets,filters,views,mixins
 
-from apps.account.models import Student
+from apps.account.models import Student, User
 from apps.pkm.filter import PKMActivityScheduleFilter, PKMIdeaContributeFilter
 from apps.pkm.models import PKMActivitySchedule, PKMIdeaContribute, PKMIdeaContributeApplyTeam, PKMScheme
 from apps.pkm.serializers import PKMActivityScheduleSerializer, PKMIdeaContributeApplyTeamSerializer, PKMIdeaContributeSerializer, PKMSchemeSerializer
@@ -33,24 +33,25 @@ class PKMActivityScheduleViewSet(viewsets.GenericViewSet, mixins.ListModelMixin,
 
 
 class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]      
     serializer_class = PKMIdeaContributeSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'tags__name', 'description']
     filterset_class = PKMIdeaContributeFilter
     ordering_fields = ['created', 'applied_date']
     lookup_field = 'slug'
+    queryset = PKMIdeaContribute.objects.all()
 
-    def get_queryset(self):          
-        if self.request.user.is_superuser:
-                return PKMIdeaContribute.objects.all()
-        if self.action == 'list':
-            return PKMIdeaContribute.objects.filter(status='P')
-        elif self.action == 'retrieve':
-            slug = self.kwargs.get('slug')  
-            return PKMIdeaContribute.objects.filter(slug=slug)
-        else:
-            return PKMIdeaContribute.objects.none()
+    # def get_queryset(self):          
+    #     if self.request.user.is_superuser:
+    #             return PKMIdeaContribute.objects.all()        
+    #     if self.action == 'list':
+    #         return PKMIdeaContribute.objects.filter(status='P')
+    #     elif self.action == 'retrieve':
+    #         slug = self.kwargs.get('slug')  
+    #         return PKMIdeaContribute.objects.filter(slug=slug)
+    #     else:
+    #         return PKMIdeaContribute.objects.none()
         
 
     @action(detail=False, methods=['get'])
@@ -68,7 +69,7 @@ class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
         paginator = PageNumberPagination()
         paginator.page_size = 10  
         result_page = paginator.paginate_queryset(idea_contributes, request)
-        serializer = PKMIdeaContributeSerializer(result_page, many=True)
+        serializer = PKMIdeaContributeSerializer(result_page, many=True, context={'request': request})
 
 
         return paginator.get_paginated_response(serializer.data)
@@ -120,6 +121,25 @@ class PKMIdeaContributeApplyTeamViewSet(viewsets.ModelViewSet):
             return PKMIdeaContributeApplyTeam.objects.all()
         student = get_object_or_404(Student, user=user)
         return PKMIdeaContributeApplyTeam.objects.filter(Q(team__leader=student))
+    
+    @action(detail=False, methods=['get'], url_path='by_creator', url_name='by_creator')
+    def by_creator(self, request):
+        user = request.user
+        if user.is_superuser:
+            queryset = PKMIdeaContributeApplyTeam.objects.all()
+        else:
+            queryset = PKMIdeaContributeApplyTeam.objects.filter(Q(idea_contribute__user=user))
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = PKMIdeaContributeApplyTeamSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+        
+        # Serialize the queryset directly if not paginating
+        serializer = PKMIdeaContributeApplyTeamSerializer(queryset, many=True, context={'request': request})        
+        return Response(serializer.data)
+
+
         # if PKMIdeaContributeApplyTeam.objects.filter(idea_contribute__user=user).exists():
         #     return PKMIdeaContributeApplyTeam.objects.filter(idea_contribute__user=user)
 

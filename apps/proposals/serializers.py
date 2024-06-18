@@ -47,14 +47,16 @@ class SubmissionProposalSerializer(serializers.ModelSerializer):
         return obj.applies.count()
     
     def get_team_apply_status(self, obj):
-        user = self.context['request'].user 
-        if user.is_superuser:
+        if not self.context['request'].user.groups.filter(name='Student').exists():
             return None
-        student = get_object_or_404(Student, user=user)
-        team = Team.objects.filter(leader=student, status='ACTIVE').first()
-        proposal_apply = obj.applies.filter(status__in=['APPLIED', 'REJECTED','REVISION','PASSED', 'PASSED FUNDING'], team=team).first()
 
-        return proposal_apply.status if proposal_apply else None
+        student = get_object_or_404(Student, user=self.context['request'].user)
+        team = Team.objects.filter(Q(members=student) | Q(leader=student)).first()
+        if team : 
+            proposal_apply = obj.applies.filter(status__in=['APPLIED', 'REJECTED','REVISION','PASSED', 'PASSED FUNDING'], team=team).first()
+            return proposal_apply.status if proposal_apply else None
+        return None
+
 
 class TagSerializer(TaggitSerializer, serializers.ModelSerializer):
     class Meta:

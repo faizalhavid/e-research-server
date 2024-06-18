@@ -73,7 +73,7 @@ class PKMIdeaContribute(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = hashlib.sha256().hexdigest()
+            self.slug = hashlib.sha256(self.title.encode('utf-8')).hexdigest()
         if self.status == 'P' and not self.applied_date:
             self.applied_date = timezone.now()
         super().save(*args, **kwargs)

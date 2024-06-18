@@ -29,8 +29,10 @@ class NoticeAdmin(admin.ModelAdmin):
 
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
-    list_display = ['title', 'slug']
+    list_display = ['title', 'slug', 'status']
     search_fields = ['title', 'content']
+    actions = ['make_published', 'make_draft']
+    list_editable = ['status']
 
 
     def has_add_permission(self, request):
@@ -41,6 +43,15 @@ class ArticleAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser or request.user.groups.filter(name='Admin').exists()
+    
+    def make_published(self, request, queryset):
+        queryset.update(status='P')
+    
+    def make_draft(self, request, queryset):
+        queryset.update(status='D')
+
+
+
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
