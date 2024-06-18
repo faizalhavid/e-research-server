@@ -42,7 +42,7 @@ class SubmissionProposal(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = self.title.replace(' ', '-').lower()
+            self.slug = hashlib.sha256(self.title.encode('utf-8')).hexdigest()[:50]
         super().save(*args, **kwargs)
     
 class SubmissionsProposalApply(models.Model):
