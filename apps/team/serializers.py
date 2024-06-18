@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from apps.account.models import Lecturer, Student
+from apps.account.models import Lecturer, Student, User
 from apps.account.serializers import DepartmentSerializer, LecturerSerializer, MajorSerializer
 from apps.team.models import Team, TeamApply, TeamTask, TeamVacancies
 from utils.exceptions import failure_response_validation
@@ -57,11 +57,15 @@ class TeamSerializer(serializers.ModelSerializer):
         if Team.objects.filter(lecturer=lecturer, status='ACTIVE').count() >= 10:
             raise failure_response_validation('The lecturer has reached the maximum number of teams')
 
-        if any(member.user == user for member in members):
+        # Assuming User is your user model and members is a list of user IDs
+        users = User.objects.filter(id__in=members)  # Fetch user objects based on member IDs
+        if any(member.user == user for member in users):  # Now member is a user object
             raise failure_response_validation({'members': 'Leader cannot also be a member'})
-    
-        if any(Team.objects.filter(members=member).count() > 3 for member in members):
-            raise failure_response_validation({'members': 'The member has joined the maximum number of teams'})
+        for member_id in members:
+            member = Student.objects.get(id=member_id)
+            if Team.objects.filter(members=member).count() > 3:
+                error_message = f"Member {member.full_name} has reached the maximum team limit."
+                raise failure_response_validation({"members": error_message})
         
         
     

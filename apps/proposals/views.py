@@ -1,3 +1,4 @@
+from requests import Response
 from rest_framework import viewsets, permissions, generics,filters,mixins
 
 from apps.proposals.models import  SubmissionProposal, SubmissionsProposalApply
@@ -5,6 +6,11 @@ from apps.proposals.serializers import SubmissionProposalApplySerializer, Submis
 from taggit.models import Tag
 from apps.proposals.filter import  SubmissionProposalApplyFilter, TagFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
+
+from utils.exceptions import success_response
+
 
 
 # class ProposalViewSet(viewsets.ModelViewSet):
@@ -46,3 +52,16 @@ class SubmissionProposalApplyViewSet(viewsets.ModelViewSet):
     queryset = SubmissionsProposalApply.objects.all()
     lookup_field = 'slug'
     
+    
+    @action(detail=False, methods=['get'], url_path='by_team/(?P<team_slug>[^/.]+)')
+    def by_team(self, request, *args, **kwargs):
+        team_slug = kwargs.get('team_slug')
+        
+        if not team_slug:
+            return success_response('Team id is required')
+        queryset = SubmissionsProposalApply.objects.filter(team__slug=team_slug)
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = self.get_serializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)

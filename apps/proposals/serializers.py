@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from apps.account.models import Student
 from apps.pkm.serializers import PKMProgramSerializer
@@ -46,9 +47,13 @@ class SubmissionProposalSerializer(serializers.ModelSerializer):
         return obj.applies.count()
     
     def get_team_apply_status(self, obj):
-        student = Student.objects.get(user=self.context['request'].user)
+        user = self.context['request'].user 
+        if user.is_superuser:
+            return None
+        student = get_object_or_404(Student, user=user)
         team = Team.objects.filter(leader=student, status='ACTIVE').first()
         proposal_apply = obj.applies.filter(status__in=['APPLIED', 'REJECTED','REVISION','PASSED', 'PASSED FUNDING'], team=team).first()
+
         return proposal_apply.status if proposal_apply else None
 
 class TagSerializer(TaggitSerializer, serializers.ModelSerializer):
