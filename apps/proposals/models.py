@@ -74,10 +74,16 @@ class SubmissionsProposalApply(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.category:
-            self.category = self.submission.program.scheme.first()  
+            self.category = self.submission.program.scheme.first()
 
         if not self.slug:
-            self.slug = hashlib.sha256(self.submission.title.encode('utf-8')).hexdigest()[:50]
+            original_slug = hashlib.sha256(self.submission.title.encode('utf-8')).hexdigest()[:25]
+            unique_slug = original_slug
+            num = 1
+            while SubmissionsProposalApply.objects.filter(slug=unique_slug).exists():
+                unique_slug = f"{original_slug}-{num}"
+                num += 1
+            self.slug = unique_slug
 
         if self.submission.title == 'REVISION':
             # If the application status is also "REVISION", bypass the period check
