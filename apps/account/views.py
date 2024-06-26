@@ -36,7 +36,7 @@ class LoginToken(generics.CreateAPIView):
 class Register(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
-
+    authentication_classes = (TokenAuthentication,)
     def post(self, request, *args, **kwargs):
         try:
             serializer = self.serializer_class(data=request.data, context={'request': request})
