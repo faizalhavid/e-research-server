@@ -57,16 +57,18 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         if not self.username:
             self.username = self.email.split('@')[0]
-        super().save(*args, **kwargs) 
-        if self.groups.exists():
-            if Group.objects.filter(name='Admin').exists() and Group.objects.get(name='Admin') in self.groups.all() or Group.objects.filter(name='LecturerReview').exists() and Group.objects.get(name='LecturerReview') in self.groups.all():
-                self.is_staff = True
+        super().save(*args, **kwargs)  # Save the user first to ensure username and other fields are set
+    
+        # Skip the group-based is_staff logic for superusers
+        if not self.is_superuser:
+            if self.groups.exists():
+                if Group.objects.filter(name='Admin').exists() and Group.objects.get(name='Admin') in self.groups.all() or Group.objects.filter(name='LecturerReview').exists() and Group.objects.get(name='LecturerReview') in self.groups.all():
+                    self.is_staff = True
+                else:
+                    self.is_staff = False
             else:
                 self.is_staff = False
-        else:
-            self.is_staff = False
-        super().save(*args, **kwargs)    
-    
+            super().save(*args, **kwargs)  # Save again if is_staff was potentially modified
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True, related_name='user_profile')
     full_name = models.CharField(max_length=100, blank=True, default='')

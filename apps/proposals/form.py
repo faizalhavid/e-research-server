@@ -30,3 +30,8 @@ class StageAssesment2Form(forms.ModelForm):
             'key_assessment': forms.CheckboxSelectMultiple,
             'score': forms.Select,  
         }
+
+
+class AssignLecturerForm(forms.Form):
+    lecturer = forms.ModelChoiceField(queryset=Lecturer.objects.all(), required=True, label='Choose Lecturer')
+    proposals = forms.ModelMultipleChoiceField(queryset=SubmissionsProposalApply.objects.filter(status='APPLIED'), required=True, label='Choose Proposal')

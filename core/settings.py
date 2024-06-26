@@ -13,21 +13,24 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from datetime import timedelta
 import os
 from pathlib import Path
-from decouple import config
+import environ
+
+env = environ.Env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+environ.Env.read_env(env_file=os.path.join(BASE_DIR, '.env'),overrides=True)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('DJANGO_SECRET_KEY')
-DEBUG = config('DEBUG', default='TRUE', cast=bool)
+SECRET_KEY = env.str('DJANGO_SECRET_KEY')
+DEBUG = env.bool('DEBUG', default=False)
 DEBUG = True
-BASE_URL = config('BASE_URL', default='http://localhost:8000')
+BASE_URL = env.str('BASE_URL', default='http://localhost:8000')
 
-ALLOWED_HOSTS = ['e-research-be3e0f7d5e0d.nevacloud.io', 'localhost','127.0.0.1']
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
 
 CKEDITOR_CONFIGS = {
@@ -126,11 +129,6 @@ AUTH_USER_MODEL = 'account.User'
 APPEND_SLASH = False
 
 
-try:
-    from .local_settings import *
-except BaseException:
-    pass
-
 # CORS
 CORS_ALLOWED_METCORS_ALLOW_METHODS = [
     'DELETE',
@@ -180,6 +178,19 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend', ],
 }
+
+
+# Konfigurasi DATABASES
+DATABASES = {
+    'default': env.db('DATABASE_URL')
+}
+
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'nurfaizal966@gmail.com'
+EMAIL_HOST_PASSWORD = 'xwmfurdtejvdjpyt'
+
 
 
 # SIMPLE JWT
@@ -298,7 +309,7 @@ JAZZMIN_SETTINGS = {
         "proposals.assessmentsubmissionsproposal",
         "proposals.keyassessment1",
         "proposals.keyassessment2",
-        "proposals.lecturerteamsubmissionapply",
+        # "proposals.lecturerteamsubmissionapply",
         "content_hub",
         "content_hub.article",
         "content_hub.notice",
@@ -340,9 +351,9 @@ JAZZMIN_SETTINGS = {
 
 # AWS
 AWS_QUERYSTRING_AUTH = False
-AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
+AWS_ACCESS_KEY_ID = env.str('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = env.str('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = env.str('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_ENDPOINT_URL = 'https://ap-south-1.linodeobjects.com/'
 AWS_S3_OBJECT_PARAMETERS = {
     'ACL': 'public-read'

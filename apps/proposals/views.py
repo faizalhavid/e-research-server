@@ -1,14 +1,16 @@
+from django.shortcuts import redirect, render
 from requests import Response
 from rest_framework import viewsets, permissions, generics,filters,mixins
 
-from apps.proposals.models import  SubmissionProposal, SubmissionsProposalApply
+from apps.proposals.form import AssignLecturerForm
+from apps.proposals.models import  AssesmentSubmissionsProposal, SubmissionProposal, SubmissionsProposalApply
 from apps.proposals.serializers import SubmissionProposalApplySerializer, SubmissionProposalSerializer, TagSerializer
 from taggit.models import Tag
 from apps.proposals.filter import  SubmissionProposalApplyFilter, TagFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-
+from django.contrib import messages
 from utils.exceptions import success_response
 
 
@@ -65,3 +67,4 @@ class SubmissionProposalApplyViewSet(viewsets.ModelViewSet):
         result_page = paginator.paginate_queryset(queryset, request)
         serializer = self.get_serializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+    

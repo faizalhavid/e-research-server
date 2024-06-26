@@ -1,9 +1,11 @@
+from django import forms
 from django.contrib import admin
 from .models import Notice, Article, Comment
 from django.contrib.auth.models import Group
 from django.utils.safestring import mark_safe
 from ckeditor.widgets import CKEditorWidget
 from django.db import models
+from django.contrib.contenttypes.models import ContentType
 
 @admin.register(Notice)
 class NoticeAdmin(admin.ModelAdmin):
@@ -23,6 +25,7 @@ class NoticeAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser or request.user.groups.filter(name='Admin').exists()
+
 
 
 
