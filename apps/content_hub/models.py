@@ -4,10 +4,13 @@ from django.db import models
 from ckeditor.fields import RichTextField
 from django.utils.text import slugify
 from apps.account.models import User
+from apps.pkm.models import PKMIdeaContribute
+from apps.proposals.models import SubmissionsProposalApply
 from utils.exceptions import failure_response_validation
 from utils.handle_file_upload import UploadToPathAndRename
 from taggit.managers import TaggableManager
-
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 # Create your models here.
 class Notice(models.Model):
     title = models.CharField(max_length=200)
@@ -41,6 +44,7 @@ class Article(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'is_staff': True})
     created = models.DateTimeField(auto_now_add=True)
     image = models.ImageField(upload_to='articles/', default='articles/default.jpg', blank=True, null=True)
+
     excerpt = models.TextField(blank=True, null=True,verbose_name='kutipan')
     STATUS_CHOICES = (
         ('D', 'Draft'),
@@ -53,7 +57,15 @@ class Article(models.Model):
     content = RichTextField()
     slug = models.SlugField(unique=True, blank=True, null=True, max_length=100)
     tags = TaggableManager()
-
+    
+    idea_contribute = models.ForeignKey(PKMIdeaContribute, on_delete=models.CASCADE, blank=True, null=True, limit_choices_to={'status': 'P'})
+    submission_proposal_apply = models.ForeignKey(
+        SubmissionsProposalApply,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        limit_choices_to={'status__in': ['PASSED', 'PASSED FUNDING']}
+    )
     def __str__(self):
         return self.title
     

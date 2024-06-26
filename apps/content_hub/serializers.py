@@ -1,5 +1,8 @@
 import bleach
 from rest_framework import serializers
+
+from apps.pkm.serializers import PKMIdeaContributeSerializer
+from apps.proposals.serializers import SubmissionProposalApplySerializer
 from .models import Notice, Article, Comment
 from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
@@ -25,6 +28,8 @@ class ArticleSerializer(TaggitSerializer,serializers.ModelSerializer):
     tags = TagListSerializerField()
     content = serializers.CharField(read_only=True)
     author = serializers.SerializerMethodField()
+    idea_contribute = PKMIdeaContributeSerializer(read_only=True)
+    submission_proposal_apply = SubmissionProposalApplySerializer(read_only=True)
     class Meta:
         model = Article
         fields = '__all__'
@@ -40,6 +45,8 @@ class ArticleSerializer(TaggitSerializer,serializers.ModelSerializer):
             'author': {'read_only': True},
             'content': {'read_only': True},
             'tags': {'read_only': True},
+            'idea_contribute': {'read_only': True},
+            'submission_proposal_apply': {'read_only': True},
         }
 
     def get_author(self, obj):

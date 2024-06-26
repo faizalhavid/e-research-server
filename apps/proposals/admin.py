@@ -1,14 +1,17 @@
+from os import path
 from django import forms
 from django.contrib import admin
 from django.forms import BaseInlineFormSet, ModelForm, model_to_dict
 from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from apps.account.models import Lecturer
 from django.utils.html import format_html
 from apps.proposals.models import *
 from django.db.models import Count, Max
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
-import json  # Make sure this import is at the top of your file
+import json
+
 
 @admin.register(LecturerTeamSubmissionApply)
 class LecturerTeamSubmissionApplyAdmin(admin.ModelAdmin):
@@ -131,13 +134,16 @@ class AssessmentReportResource(resources.ModelResource):
     get_reviewer_info = fields.Field(attribute='get_reviewer_info', column_name='Reviewer Info')
 
     def dehydrate_stage_2_comment(self, assessment_report):
-        return assessment_report.assessment_review.comment
+        if assessment_report.assessment_review is None:
+            return '-'
 
     def dehydrate_stage_2_average_score(self, assessment_report):
         return assessment_report.calculate_stage_2_average_score()
 
     def dehydrate_stage_2_final_score(self, assessment_report):
-        return assessment_report.assessment_review.final_score                     
+        if assessment_report.assessment_review is None:
+            return '-'
+        return assessment_report.assessment_review.final_score    
 
     def create_dynamic_method(self, assessment):
         def dynamic_method(*args, **kwargs):
@@ -181,6 +187,8 @@ class AssessmentReportResource(resources.ModelResource):
         return obj.assessment_submission_proposal.submission_apply.team.leader.major.name
 
     def dehydrate_get_final_score(self, obj):
+        if obj.assessment_review is None or obj.assessment_review.final_score is None:
+            return '-'
         return obj.assessment_review.final_score
 
     def dehydrate_get_leader_info(self, obj):
@@ -189,7 +197,7 @@ class AssessmentReportResource(resources.ModelResource):
 
     def dehydrate_get_reviewer_info(self, obj):
         lecturer = obj.assessment_submission_proposal.reviewer
-        return f"{lecturer.full_name} / "
+        return f"{lecturer.full_name} / {lecturer.phone_number}"
 
     def dehydrate_number(self, obj):
         self.row_number += 1  # Increment the counter
@@ -208,6 +216,20 @@ class AssessmentReportResource(resources.ModelResource):
         def import_data(self, dataset, dry_run=False, raise_errors=False, use_transactions=None, collect_failed_rows=False, **kwargs):
             raise NotImplementedError("Importing is not allowed")
 
+class CategoryFilter(admin.RelatedFieldListFilter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.title = ('Category')
+
+    def choices(self, changelist):
+        # Override choices to remove the "All" option
+        for lookup, title in self.lookup_choices:
+            yield {
+                'selected': self.lookup_val == str(lookup),
+                'query_string': changelist.get_query_string({self.lookup_kwarg: lookup}),
+                'display': title,
+            }
+
 @admin.register(AssessmentReport)
 class AssessmentReportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     resource_class = AssessmentReportResource
@@ -222,52 +244,33 @@ class AssessmentReportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     )
 
     change_list_template = 'admin/proposal/assessmentreport/change_list.html'
-
+    list_filter = (
+        ('assessment_submission_proposal__submission_apply__category', CategoryFilter),
+    )
+   
     def changelist_view(self, request, extra_context=None):
-        extra_context = extra_context or {} 
-        max_assessments = AssessmentReport.objects.annotate(
-            num_assessments=Count('stage_assessment_2')
-        ).aggregate(max=Max('num_assessments'))['max']
-        extra_context['max_assessments'] = max_assessments or 0
+        # Ensure the filter is always applied
+        if not request.GET.get('assessment_submission_proposal__submission_apply__category__id__exact'):
+            # Set the default filter value (replace '1' with the actual default category ID you want)
+            default_category_id = 1  # Example category ID
+            query_string = request.META['QUERY_STRING']
+            if query_string:
+                query_string = f"assessment_submission_proposal__submission_apply__category__id__exact={default_category_id}&{query_string}"
+            else:
+                query_string = f"assessment_submission_proposal__submission_apply__category__id__exact={default_category_id}"
+            return HttpResponseRedirect(f"{request.path}?{query_string}")
+
+        extra_context = extra_context or {}
+        extra_context['categories'] = AssessmentReport.objects.values_list(
+            'assessment_submission_proposal__submission_apply__category__name', flat=True
+        ).distinct()
+        
+        # Customize list display based on active filter category
+        self.list_display = self.get_list_display(request)
+
         return super().changelist_view(request, extra_context=extra_context)
 
-    def get_list_display(self, request):
 
-        basic_display = list(super().get_list_display(request))
-        max_assessments = AssessmentReport.objects.annotate(
-            num_assessments=Count('stage_assessment_2')
-        ).aggregate(max=Max('num_assessments'))['max']
-        if max_assessments:
-            for i in range(max_assessments):
-                basic_display.insert(4 + i, f'assessment_title_{i+1}')
-        return basic_display
-
-    def get_dynamic_assessment_title(self, obj, n):
-        assessments = list(obj.stage_assessment_2.all())
-        if len(assessments) >= n:
-            return assessments[n-1].score
-        return "-"
-
-    def __getattr__(self, name):
-        if name.startswith('assessment_title_'):
-            index = int(name.split('_')[-1])
-            return lambda obj: self.get_dynamic_assessment_title(obj, index)
-        raise AttributeError(f"{self.__class__.__name__} object has no attribute {name}")
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        max_assessments = AssessmentReport.objects.annotate(
-            num_assessments=Count('stage_assessment_2')
-        ).aggregate(max=Max('num_assessments'))['max']
-        if max_assessments:
-            for i in range(max_assessments):
-                method_name = f'assessment_title_{i+1}'
-                method = self.__getattr__(method_name)
-                setattr(self, method_name, method)
-                assessments = AssessmentReport.objects.values_list('stage_assessment_2__key_assesment__title', 'stage_assessment_2__key_assesment__presentase')
-                title = [f'{title} ({presentase}%)' for title, presentase in assessments]
-                data = title[i] if i < len(title) else f'Assessment Title {i+1}'
-                setattr(method, 'short_description', data)
 
     search_fields = ('assessment_submission_proposal__submission_apply__team__name', 'report_details')
     readonly_fields = ('assessment_submission_proposal', 'stage_assessment_2', 'assessment_review')
@@ -295,6 +298,7 @@ class AssessmentReportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     def get_final_score(self, obj):
         if obj and hasattr(obj, 'assessment_review') and obj.assessment_review and hasattr(obj.assessment_review, 'final_score'):
             return obj.assessment_review.final_score
+        
         return None  # Or return 0 as a default value, depending on your requirements
 
     def get_assessment_titles(self, obj):
@@ -309,7 +313,7 @@ class AssessmentReportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
     def get_reviewer_info(self, obj):
         lecturer = obj.assessment_submission_proposal.reviewer
-        return f"{lecturer.full_name} / "
+        return f"{lecturer.full_name} / {lecturer.phone_number}"
     get_reviewer_info.short_description = 'Reviewer Info'
 
     def save_model(self, request, obj, form, change):
@@ -439,6 +443,7 @@ class AssesmentReviewInline(admin.TabularInline):
     extra = 1
     max_num = 1
 
+
 @admin.register(AssesmentSubmissionsProposal)
 class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
 
@@ -468,7 +473,6 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
 
     
     inlines = [StageAssesment1Inline, StageAssesment2Inline, AssesmentReviewInline]
-    change_form_template = 'admin/assesmentProposal/assesmentForm.html'
     list_display = ('submission_information', 'status_colored', 'reviewer', 'reviewed_at')
     list_editable = ('reviewer',)
     list_filter = ('submission_apply__submission__title', 'reviewer')

@@ -159,6 +159,7 @@ class LecturerTeamSubmissionApply(models.Model):
 
     def __str__(self):
         return f"Lecturer: {self.lecturer.full_name} - Submissions: {', '.join(str(sub) for sub in self.submission_apply.all())}"  
+
 class AssesmentSubmissionsProposal(models.Model):
     submission_apply = models.ForeignKey('proposals.SubmissionsProposalApply', related_name='assesments', on_delete=models.CASCADE)
     reviewer = models.ForeignKey('account.Lecturer', related_name='assesments', on_delete=models.CASCADE)
@@ -289,65 +290,70 @@ class AssessmentReport(models.Model):
             return 0
         total_score = sum(assessment.score for assessment in stage_2_assessments)
         return total_score / stage_2_assessments.count()
+    def get_category(self):
+        return self.assessment_submission_proposal.submission_apply.category
 
 
 
 
-@receiver(pre_save, sender=LecturerTeamSubmissionApply)
-def capture_old_values(sender, instance, **kwargs):
-    if instance.pk:
-        old_instance = sender.objects.get(pk=instance.pk)
-        instance._old_lecturer = old_instance.lecturer
-        instance._old_submission_apply = list(old_instance.submission_apply.all())
+# @receiver(pre_save, sender=LecturerTeamSubmissionApply)
+# def capture_old_values(sender, instance, **kwargs):
+#     if instance.pk:
+#         old_instance = sender.objects.get(pk=instance.pk)
+#         instance._old_lecturer = old_instance.lecturer
+#         instance._old_submission_apply = list(old_instance.submission_apply.all())
 
-@receiver(post_save, sender=LecturerTeamSubmissionApply)
-def update_assessments_on_change(sender, instance, created, **kwargs):
-    if created:
-        return  # Skip newly created instances
+# @receiver(post_save, sender=LecturerTeamSubmissionApply)
+# def update_assessments_on_change(sender, instance, created, **kwargs):
+#     if created:
+#         return  # Skip newly created instances
 
-    # Check if 'lecturer' has changed
-    if hasattr(instance, '_old_lecturer') and instance.lecturer != instance._old_lecturer:
-        # Update assessments with the new lecturer
-        AssesmentSubmissionsProposal.objects.filter(submission_apply__in=instance.submission_apply.all(), reviewer=instance._old_lecturer).update(reviewer=instance.lecturer)
+#     # Check if 'lecturer' has changed
+#     if hasattr(instance, '_old_lecturer') and instance.lecturer != instance._old_lecturer:
+#         # Update assessments with the new lecturer
+#         AssesmentSubmissionsProposal.objects.filter(submission_apply__in=instance.submission_apply.all(), reviewer=instance._old_lecturer).update(reviewer=instance.lecturer)
 
-    # Check if 'submission_apply' has changed
-    if hasattr(instance, '_old_submission_apply'):
-        new_submissions = set(instance.submission_apply.all())
-        old_submissions = set(instance._old_submission_apply)
+#     # Check if 'submission_apply' has changed
+#     if hasattr(instance, '_old_submission_apply'):
+#         new_submissions = set(instance.submission_apply.all())
+#         old_submissions = set(instance._old_submission_apply)
 
-        # Find removed submissions
-        removed_submissions = old_submissions - new_submissions
-        if removed_submissions:
-            AssesmentSubmissionsProposal.objects.filter(submission_apply__in=removed_submissions, reviewer=instance.lecturer).delete()
+#         # Find removed submissions
+#         removed_submissions = old_submissions - new_submissions
+#         if removed_submissions:
+#             AssesmentSubmissionsProposal.objects.filter(submission_apply__in=removed_submissions, reviewer=instance.lecturer).delete()
 
-        # Find added submissions
-        added_submissions = new_submissions - old_submissions
-        for submission in added_submissions:
-            AssesmentSubmissionsProposal.objects.get_or_create(submission_apply=submission, defaults={'reviewer': instance.lecturer})
+#         # Find added submissions
+#         added_submissions = new_submissions - old_submissions
+#         for submission in added_submissions:
+#             AssesmentSubmissionsProposal.objects.get_or_create(submission_apply=submission, defaults={'reviewer': instance.lecturer})
 
-@receiver(m2m_changed, sender=LecturerTeamSubmissionApply.submission_apply.through)
-def update_assessments(sender, instance, action, reverse, pk_set, **kwargs):
-    if action == "post_add":
-        # Handle the case where submission applies are added to the lecturer team submission
-        for submission_apply_id in pk_set:
-            AssesmentSubmissionsProposal.objects.get_or_create(
-                submission_apply_id=submission_apply_id,
-                reviewer=instance.lecturer
-            )
-    elif action == "post_remove":
-        # Handle the case where submission applies are removed from the lecturer team submission
-        if reverse:
-            for submission_apply_id in pk_set:
-                AssesmentSubmissionsProposal.objects.filter(
-                    submission_apply_id=submission_apply_id,
-                    reviewer=instance.lecturer
-                ).delete()
-    elif action == "post_clear":
-        # Handle the case where all submission applies are removed from the lecturer team submission
-        if reverse:
-            AssesmentSubmissionsProposal.objects.filter(
-                reviewer=instance.lecturer
-            ).delete()
+# @receiver(m2m_changed, sender=LecturerTeamSubmissionApply.submission_apply.through)
+# def update_assessments(sender, instance, action, reverse, pk_set, **kwargs):
+#     if action == "post_add":
+#         # Handle the case where submission applies are added to the lecturer team submission
+#         for submission_apply_id in pk_set:
+#             AssesmentSubmissionsProposal.objects.get_or_create(
+#                 submission_apply_id=submission_apply_id,
+#                 reviewer=instance.lecturer
+#             )
+#     elif action == "post_remove":
+#         # Handle the case where submission applies are removed from the lecturer team submission
+#         if reverse:
+#             for submission_apply_id in pk_set:
+#                 AssesmentSubmissionsProposal.objects.filter(
+#                     submission_apply_id=submission_apply_id,
+#                     reviewer=instance.lecturer
+#                 ).delete()
+#     elif action == "post_clear":
+#         # Handle the case where all submission applies are removed from the lecturer team submission
+#         if reverse:
+#             AssesmentSubmissionsProposal.objects.filter(
+#                 reviewer=instance.lecturer
+#             ).delete()
+
+
+
 @receiver(post_save, sender=AssesmentSubmissionsProposal)
 def update_final_score(sender, instance, **kwargs):
     for report in instance.assesment_report.all():
