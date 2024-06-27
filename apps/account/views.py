@@ -118,6 +118,7 @@ class AccountActivation(generics.GenericAPIView):
 class ResendEmailActivation(generics.UpdateAPIView):
     queryset = User.objects.all()
     permission_classes = [permissions.AllowAny]
+    authentication_classes = (TokenAuthentication,)
     serializer_class = ResendEmailSerializer
     uuid = uuid.uuid4()
 
@@ -159,6 +160,7 @@ class ResendEmailActivation(generics.UpdateAPIView):
 class ForgetPasswordMail(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = [permissions.AllowAny]
+    authentication_classes = (TokenAuthentication,)
     serializer_class = ForgetPasswordMail
 
     def post(self, request, *args, **kwargs):
@@ -204,6 +206,7 @@ class ChangePassword(generics.UpdateAPIView):
 class ResetPassword(generics.UpdateAPIView):
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
+    authentication_classes = (TokenAuthentication,)
     serializer_class = ResetPasswordSerializer
  
 class UserProfileViewset(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
@@ -224,6 +227,7 @@ class UserProfileViewset(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
 class RefreshTokenView(generics.CreateAPIView):
 
     permission_classes = [permissions.AllowAny]
+    authentication_classes = (TokenAuthentication,)
     serializer_class = RefreshTokenSerializer
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
