@@ -73,13 +73,14 @@ class Article(models.Model):
         return f'/article/{self.slug}'
     
     def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.title)
+        self.slug = slugify(self.title)
         if not self.excerpt:
             self.excerpt = self.content[:100]
         super().save(*args, **kwargs)
 
-    
+        if self.submission_proposal_apply is not None:
+            self.tags.add('proposal lolos pendanaan')
+            super().save(*args, **kwargs)
 
     
 class Comment(models.Model):

@@ -1,11 +1,10 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save,pre_save
 from django.dispatch import receiver
 
 from apps.notification.models import Notification
-from apps.proposals.models import AssesmentReview, AssesmentSubmissionsProposal, AssessmentReport, StageAssesment1, StageAssesment2, SubmissionsProposalApply
+from apps.proposals.models import AssesmentReview, AssesmentSubmissionsProposal, AssessmentReport, StageAssesment1, StageAssesment2, SubmissionProposal, SubmissionsProposalApply
 from apps.team.models import Team
-from django.db import transaction
-
+from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 from utils.send_notification import BaseNotification
 
@@ -104,3 +103,9 @@ def update_assessment_report_from_review(sender, instance, created, **kwargs):
         current_assessment = AssessmentReport.objects.filter(assessment_submission_proposal=instance.assesment)
         if current_assessment.exists():
             current_assessment.update(assessment_review=instance)
+
+
+@receiver(pre_save, sender=SubmissionProposal)
+def check_due_time(sender, instance, **kwargs):
+    if instance.due_time < timezone.now() and instance.status != 'CLOSED':
+        instance.status = 'CLOSED'

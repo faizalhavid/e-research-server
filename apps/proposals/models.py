@@ -30,6 +30,7 @@ class SubmissionProposal(models.Model):
     STATUS = (
         ('ARCHIVED', 'Archived'),
         ('PUBLISHED', 'Published'),
+        ('CLOSED', 'Closed'),
     )
     status = models.CharField(max_length=10, choices=STATUS, default='SUBMITTED')
 
@@ -43,6 +44,7 @@ class SubmissionProposal(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = hashlib.sha256(self.title.encode('utf-8')).hexdigest()[:50]
+        
         super().save(*args, **kwargs)
     
 class SubmissionsProposalApply(models.Model):
@@ -66,7 +68,7 @@ class SubmissionsProposalApply(models.Model):
     proposal = models.FileField(upload_to=UploadToPathAndRename(os.path.join('proposals', 'submission_proposal/apply')))
     slug = models.SlugField(unique=True, blank=True, null=True)
     def __str__(self):
-        return f"{self.team.name} - {self.submission.title}"
+        return f"{self.team.name} - {self.title}"
     
     class Meta:
         verbose_name_plural = 'Proposal Mahasiswa'
