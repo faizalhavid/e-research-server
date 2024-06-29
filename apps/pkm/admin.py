@@ -36,6 +36,7 @@ class PKMSchemeAdmin(admin.ModelAdmin):
 class PKMIdeaContributeAdmin(admin.ModelAdmin):
     list_display = ['title', 'status', 'created']
     search_fields = ['title', 'description']
+    list_editable = ['status']
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)

@@ -4,8 +4,8 @@ from django.utils import timezone
 from django.utils.text import slugify
 from taggit.managers import TaggableManager
 from django.contrib.postgres.fields import ArrayField
-
-from utils.exceptions import failure_response_validation
+from django.core.exceptions import NON_FIELD_ERRORS
+from utils.exceptions import ValidationError, failure_response_validation
 
 class PKMProgram(models.Model):
     period = models.IntegerField()
@@ -96,12 +96,23 @@ class PKMIdeaContributeApplyTeam(models.Model):
     class Meta:
         verbose_name = 'Apply Team Idea Contribute'
         verbose_name_plural = 'Apply Team Idea Contribute'
-        # unique_together = ('idea_contribute', 'team')
+        unique_together = ('idea_contribute', 'team')
     def __str__(self):
-        if not self.slug:
-            self.slug = hashlib.sha256((self.idea_contribute.title + self.team.name).encode('utf-8')).hexdigest()
         
         return f"{self.team.name} - {self.idea_contribute.title}"
     
-    
+
+
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = hashlib.sha256((self.idea_contribute.title + self.team.name).encode('utf-8')).hexdigest()[:20]
+        if self.status == 'A':
+            # Set all other applications for the same idea_contribute to 'R'
+            PKMIdeaContributeApplyTeam.objects.filter(
+                idea_contribute=self.idea_contribute
+            ).exclude(
+                pk=self.pk
+            ).update(status='R')
+        super(PKMIdeaContributeApplyTeam, self).save(*args, **kwargs)
     

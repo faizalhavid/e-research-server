@@ -1,3 +1,4 @@
+import logging
 from celery import shared_task
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -166,19 +167,24 @@ def pkm_idea_contribute_team_notification(sender, instance, created, **kwargs):
 @receiver(post_save, sender=PKMIdeaContributeApplyTeam)
 def pkm_idea_contribute_team_owner_notification(sender, instance, created, **kwargs):
     if created:
-        # Fetch the ContentType for PKMIdeaContributeApplyTeam
-        content_type = ContentType.objects.get_for_model(PKMIdeaContributeApplyTeam)
-        
-        # Create a Notification instance
-        Notification.objects.create(
-            user=instance.team.leader.user,
-            message=f"Your PKM Idea Contribute Apply Team '{instance.idea_contribute.title}' has been created.",
-            content_type=content_type,
-            object_id=instance.id
-        )
-    if created:  # only for newly created instances
-        Notification.objects.create(
-            user=instance.idea_contribute.user,
-            message=f"Team {instance.team.name} has applied to your idea {instance.idea_contribute.title}.",
-            type='info'  # Assuming 'info' is a valid type in your Notification model
-        )
+        try:
+            # Fetch the ContentType for PKMIdeaContributeApplyTeam
+            content_type = ContentType.objects.get_for_model(PKMIdeaContributeApplyTeam)
+            if content_type:
+                # Create a Notification instance for the team leader
+                Notification.objects.create(
+                    user=instance.team.leader.user,
+                    message=f"Your PKM Idea Contribute Apply Team '{instance.idea_contribute.title}' has been created.",
+                    content_type=content_type,
+                    object_id=instance.id
+                )
+                # Create a Notification instance for the idea contributor
+                Notification.objects.create(
+                    user=instance.idea_contribute.user,
+                    message=f"Team {instance.team.name} has applied to your idea {instance.idea_contribute.title}.",
+                    type='info'  # Assuming 'info' is a valid type in your Notification model
+                )
+            else:
+                logging.error("ContentType for PKMIdeaContributeApplyTeam is null.")
+        except ContentType.DoesNotExist:
+            logging.error("ContentType for PKMIdeaContributeApplyTeam does not exist.")

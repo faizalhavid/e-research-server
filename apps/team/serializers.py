@@ -156,7 +156,7 @@ class TeamApplySerializer(serializers.ModelSerializer):
     
     
 class TeamTaskSerializer(serializers.ModelSerializer):
-    team_name = serializers.SerializerMethodField()
+    team = TeamSerializer(read_only=True)
     class Meta:
         model = TeamTask
         fields = '__all__'
@@ -169,13 +169,7 @@ class TeamTaskSerializer(serializers.ModelSerializer):
         task = TeamTask.objects.create(team=team, **validated_data)
         return task
     
-    def get_team_name(self, obj):
-        team_slug = self.context.get('team_slug')  # Use .get() to avoid KeyError
-        if team_slug:
-            team = Team.objects.get(slug=team_slug)
-            return team.name
-        return None  # Return None or a default value if 'team_slug' is not in context
-    
+
     def validate(self, data):
         team_slug = self.context['team_slug']
         team = Team.objects.get(slug=team_slug)

@@ -6,6 +6,7 @@ from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
 
 
+from apps.proposals.models import SubmissionsProposalApply
 from apps.team.models import Team
 from apps.team.serializers import TeamSerializer
 from utils.exceptions import failure_response, failure_response_validation
@@ -103,12 +104,19 @@ class PKMIdeaContributeApplyTeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = PKMIdeaContributeApplyTeam
         fields = '__all__'
-        read_only_fields = ['slug', 'status', 'created', 'applied_date']
+        read_only_fields = ['slug', 'created', 'applied_date']
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=PKMIdeaContributeApplyTeam.objects.all(),
+                fields=['team', 'idea_contribute'],
+                message="Your team has already applied for this idea contribute"
+            )
+        ]
 
     def validate(self, attrs):
         idea_contribute = attrs.get('idea_contribute')
         team = attrs.get('team')
-        submission = attrs.get('submission')  # Assuming submission is part of attrs
+        submission = SubmissionsProposalApply.objects.get(team=team)
         title = attrs.get('title')  # Assuming title is part of attrs
     
         # Existing validations
@@ -127,15 +135,15 @@ class PKMIdeaContributeApplyTeamSerializer(serializers.ModelSerializer):
         if PKMIdeaContributeApplyTeam.objects.filter(team=team, status='A').exclude(idea_contribute=idea_contribute).exists():
             raise failure_response_validation("This team has already applied to another idea")
     
-        # New validation for unique_together constraint
-        if self.instance:
-            # If updating, exclude the current instance from the unique check
-            if PKMIdeaContributeApplyTeam.objects.filter(team=team, submission=submission, title=title).exclude(pk=self.instance.pk).exists():
-                raise failure_response_validation("You can't apply a team for the same submission and title")
-        else:
-            # For new instances, just check if any existing match the criteria
-            if PKMIdeaContributeApplyTeam.objects.filter(team=team, submission=submission, title=title).exists():
-                raise failure_response_validation("You can't apply a team for the same submission and title")
+        # # New validation for unique_together constraint
+        # if self.instance:
+        #     # If updating, exclude the current instance from the unique check
+        #     if PKMIdeaContributeApplyTeam.objects.filter(team=team, submission=submission, title=title).exclude(pk=self.instance.pk).exists():
+        #         raise failure_response_validation("You can't apply a team for the same submission and title")
+        # else:
+        #     # For new instances, just check if any existing match the criteria
+        #     if PKMIdeaContributeApplyTeam.objects.filter(team=team, submission=submission, title=title).exists():
+        #         raise failure_response_validation("You can't apply a team for the same submission and title")
     
         return attrs
 

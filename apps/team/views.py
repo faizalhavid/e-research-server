@@ -110,4 +110,4 @@ class UserTeamTaskList(generics.ListAPIView):
         if user.is_superuser:
             return TeamTask.objects.all()
         student = Student.objects.filter(user=user).first()
-        return TeamTask.objects.filter(Q(team__leader=student) | Q(team__members=student))
+        return TeamTask.objects.filter(Q(team__leader=student) | Q(team__members=student)).distinct()

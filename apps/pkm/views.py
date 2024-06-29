@@ -10,7 +10,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.team.models import Team
 from rest_framework.pagination import PageNumberPagination
-from utils.exceptions import success_response
+from utils.exceptions import failure_response, success_response
 from django.db.models import Q
 from rest_framework.decorators import action
 
@@ -40,7 +40,7 @@ class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
     filterset_class = PKMIdeaContributeFilter
     ordering_fields = ['created', 'applied_date']
     lookup_field = 'slug'
-    queryset = PKMIdeaContribute.objects.all()
+    queryset = PKMIdeaContribute.objects.filter(status='P')
 
     # def get_queryset(self):          
     #     if self.request.user.is_superuser:
@@ -83,7 +83,7 @@ class IdeaContributeReportView(views.APIView):
 
         total_contributions = user_contributions.count()
         published_contributions = user_contributions.filter(status='P').count()
-        contributions_with_team = sum(contribution.apply_teams.exists() for contribution in user_contributions)
+        contributions_with_team = sum(contribution.apply_teams.filter(status='A').count() for contribution in user_contributions)
 
         tags = []
         for contribution in user_contributions:
@@ -138,14 +138,23 @@ class PKMIdeaContributeApplyTeamViewSet(viewsets.ModelViewSet):
         # Serialize the queryset directly if not paginating
         serializer = PKMIdeaContributeApplyTeamSerializer(queryset, many=True, context={'request': request})        
         return Response(serializer.data)
-
-
-        # if PKMIdeaContributeApplyTeam.objects.filter(idea_contribute__user=user).exists():
-        #     return PKMIdeaContributeApplyTeam.objects.filter(idea_contribute__user=user)
-
-    # @action(detail=False, url_path='apply-team/(?P<team_slug>[-\w]+)', methods=['get'])
-    # def apply_team(self, request,  team_slug):
-    #     team = get_object_or_404(Team, slug=team_slug)
-    #     team_apply_ideas = PKMIdeaContributeApplyTeam.objects.filter(team=team)
-    #     serializer = PKMIdeaContributeApplyTeamSerializer(team_apply_ideas, many=True)
-    #     return success_response('Apply Team Idea Contribute', serializer.data)
+    
+    @action(detail=False, methods=['patch'], url_path='approve/(?P<slug>[-\w]+)', url_name='approve')
+    def approve(self, request, slug):
+        apply_team = get_object_or_404(PKMIdeaContributeApplyTeam, slug=slug)
+        # Check if request.user is the owner or a superuser
+        if request.user != apply_team.idea_contribute.user and not request.user.is_superuser:
+            return failure_response('You do not have permission to perform this action.', status_code=403)
+        apply_team.status = 'A'
+        apply_team.save()
+        return success_response('Apply Team Idea Contribute Approved')
+    
+    @action(detail=False, methods=['patch'], url_path='reject/(?P<slug>[-\w]+)', url_name='reject')
+    def reject(self, request, slug):
+        apply_team = get_object_or_404(PKMIdeaContributeApplyTeam, slug=slug)
+        # Check if request.user is the owner or a superuser
+        if request.user != apply_team.idea_contribute.user and not request.user.is_superuser:
+            return failure_response('You do not have permission to perform this action.', status_code=403)
+        apply_team.status = 'R'
+        apply_team.save()
+        return success_response('Apply Team Idea Contribute Rejected')
