@@ -40,7 +40,11 @@ class PKMIdeaContributeViewSet(viewsets.ModelViewSet):
     filterset_class = PKMIdeaContributeFilter
     ordering_fields = ['created', 'applied_date']
     lookup_field = 'slug'
-    queryset = PKMIdeaContribute.objects.filter(status='P')
+    
+    def get_queryset(self):
+        if self.action == 'retrieve':
+            return PKMIdeaContribute.objects.filter(status__in=['P', 'D', 'R'])
+        return PKMIdeaContribute.objects.filter(status='P')
 
     # def get_queryset(self):          
     #     if self.request.user.is_superuser:
