@@ -117,7 +117,8 @@ class PKMIdeaContributeApplyTeamSerializer(serializers.ModelSerializer):
         idea_contribute = attrs.get('idea_contribute')
         team = attrs.get('team')
         submission = SubmissionsProposalApply.objects.get(team=team)
-        title = attrs.get('title')  # Assuming title is part of attrs
+        title = attrs.get('title')
+        user = self.context['request'].user
     
         # Existing validations
         if team.status != 'ACTIVE':
@@ -134,17 +135,10 @@ class PKMIdeaContributeApplyTeamSerializer(serializers.ModelSerializer):
     
         if PKMIdeaContributeApplyTeam.objects.filter(team=team, status='A').exclude(idea_contribute=idea_contribute).exists():
             raise failure_response_validation("This team has already applied to another idea")
-    
-        # # New validation for unique_together constraint
-        # if self.instance:
-        #     # If updating, exclude the current instance from the unique check
-        #     if PKMIdeaContributeApplyTeam.objects.filter(team=team, submission=submission, title=title).exclude(pk=self.instance.pk).exists():
-        #         raise failure_response_validation("You can't apply a team for the same submission and title")
-        # else:
-        #     # For new instances, just check if any existing match the criteria
-        #     if PKMIdeaContributeApplyTeam.objects.filter(team=team, submission=submission, title=title).exists():
-        #         raise failure_response_validation("You can't apply a team for the same submission and title")
-    
+        
+        if user != idea_contribute.user:
+            raise failure_response_validation("You don't have permission to apply this team")
+
         return attrs
 
     def to_representation(self, instance):
