@@ -50,6 +50,15 @@ class SubmissionsProposalApplyAdmin(admin.ModelAdmin):
 
     def submission_information(self, obj):
         return f"{obj.team.name} - {obj.title}"
+    def get_list_editable(self, request):
+        # Mengambil nilai default dari list_editable
+        list_editable = super().get_list_editable(request)
+        
+        # Batasi pilihan status yang dapat diubah menjadi 'Passed Funding'
+        if 'status' in list_editable:
+            list_editable['status'] = ['PASSED FUNDING']
+        
+        return list_editable
     
 @admin.register(SubmissionProposal)
 class SubmissionsProposalAdmin(admin.ModelAdmin):
@@ -243,7 +252,7 @@ class AssessmentReportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
         'display_stage_2_average_score',  
     )
 
-    change_list_template = 'admin/proposal/assessmentreport/change_list.html'
+
     list_filter = (
         ('assessment_submission_proposal__submission_apply__category', CategoryFilter),
     )
@@ -447,6 +456,8 @@ class AssesmentReviewInline(admin.TabularInline):
 @admin.register(AssesmentSubmissionsProposal)
 class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
 
+    change_form_template = 'admin/assesmentProposal/assesmentForm.html'
+
     def get_form(self, request, obj=None, **kwargs):
         request._obj_ = obj
         return super(AssesmentSubmissionsProposalAdmin, self).get_form(request, obj, **kwargs)
@@ -540,7 +551,6 @@ class AssesmentSubmissionsProposalAdmin(admin.ModelAdmin):
         return format_html('<span style="color: {};">{}</span>', color, obj.submission_apply.status)
     status_colored.short_description = 'Status'
     
-
 
     def has_delete_permission(self, request, obj=None):
         if request.user.is_superuser or request.user.groups.filter(name='Admin').exists():

@@ -29,6 +29,12 @@ class Notice(models.Model):
     )
     attachment = models.FileField(upload_to=UploadToPathAndRename('notice/attachments/'), blank=True, null=True)
     slug = models.SlugField(unique=True, blank=True, null=True)
+    
+    class Meta:
+        verbose_name = 'Penguumuman'
+        verbose_name_plural = 'Pengumuman'
+        ordering = ['-created']
+
 
     def __str__(self):
         return self.title
