@@ -30,7 +30,7 @@ DEBUG = env.bool('DEBUG', default=False)
 DEBUG = True
 BASE_URL = env.str('BASE_URL', default='http://localhost:8000')
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 
 CKEDITOR_CONFIGS = {
@@ -181,10 +181,18 @@ REST_FRAMEWORK = {
 
 
 # Konfigurasi DATABASES
-DATABASES = {
-    'default': env.db('DATABASE_URL')
-}
-
+DATABASE_URL = env('DATABASE_URL', default=None)
+if DATABASE_URL:
+    DATABASES = {
+        'default': env.db('DATABASE_URL')
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -349,26 +357,33 @@ JAZZMIN_SETTINGS = {
 
 
 
-# AWS
-AWS_QUERYSTRING_AUTH = False
-AWS_ACCESS_KEY_ID = env.str('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = env.str('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = env.str('AWS_STORAGE_BUCKET_NAME')
-AWS_S3_ENDPOINT_URL = 'https://ap-south-1.linodeobjects.com/'
-AWS_S3_OBJECT_PARAMETERS = {
-    'ACL': 'public-read'
-}
-AWS_LOCATION = 'static'
 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_ACCESS_KEY_ID = env.str('AWS_ACCESS_KEY_ID', default=None)
+AWS_SECRET_ACCESS_KEY = env.str('AWS_SECRET_ACCESS_KEY', default=None)
+AWS_STORAGE_BUCKET_NAME = env.str('AWS_STORAGE_BUCKET_NAME', default=None)
 
-STATIC_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_LOCATION}/static/'
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
+    AWS_QUERYSTRING_AUTH = False
+    AWS_S3_ENDPOINT_URL = 'https://ap-south-1.linodeobjects.com/'
+    AWS_S3_OBJECT_PARAMETERS = {
+        'ACL': 'public-read'
+    }
+    AWS_LOCATION = 'static'
 
-# MEDIA AWS
-MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/media/'
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+    STATIC_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_LOCATION}/static/'
+    MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/media/'
+else:
+    STATIC_URL = '/static/'
+    MEDIA_URL = '/media/'
+
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 
 # TEMPLATE, MEDIA AND STATIC
